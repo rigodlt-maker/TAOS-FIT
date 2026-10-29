@@ -31,15 +31,35 @@ function Barra({ nombre, valor, meta, unidad }: { nombre: string; valor: number;
   );
 }
 
+function Falta({ titulo, texto, boton, href }: { titulo: string; texto: string; boton: string; href: string }) {
+  return (
+    <div className="grid gap-4">
+      <Titulo detalle="Menú con tus alimentos, cuadrado a tus calorías.">Tu comida</Titulo>
+      <Card>
+        <CardTitle>{titulo}</CardTitle>
+        <CardDescription className="mt-1">{texto}</CardDescription>
+        <Link href={href} className="mt-4 flex min-h-12 items-center justify-center rounded-xl bg-primary font-semibold text-primary-foreground">
+          {boton}
+        </Link>
+      </Card>
+    </div>
+  );
+}
+
 export default async function Comida({ searchParams }: { searchParams: Promise<{ dia?: string }> }) {
   const repo = await obtenerRepo();
   const [perfil, medidas] = await Promise.all([repo.perfil(), repo.medidas()]);
   if (!perfil) redirect("/bienvenida");
   const ultima = medidas.at(-1);
-  if (!ultima) redirect("/cuerpo");
+  // Sin peso no hay calorías: se explica en vez de mandar a otra pantalla sin aviso
+  if (!ultima)
+    return (
+      <Falta titulo="Primero registra tu peso" texto="Tu menú se calcula con tu peso de hoy. Regístralo y vuelve aquí." boton="Registrar mi peso" href="/cuerpo" />
+    );
   const metas = calcularObjetivos(perfil, ultima);
   const menu = await menuVigente(repo, perfil, ultima);
-  if (!menu) redirect("/cuerpo");
+  if (!menu)
+    return <Falta titulo="No pude armar tu menú" texto="Revisa en tu perfil qué alimentos excluiste: si quitas demasiados, no alcanzan para cuadrar tus comidas." boton="Revisar mi perfil" href="/perfil" />;
   const pedido = Number((await searchParams).dia);
   const d = Number.isInteger(pedido) && pedido >= 0 && pedido < 7 ? pedido : indiceDia(hoyLocal());
   const dia = menu.dias[d];

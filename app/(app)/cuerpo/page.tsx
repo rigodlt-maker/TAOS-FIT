@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { CamposMedida } from "@/components/campos-medida";
+import { VistaPreviaCuerpo } from "@/components/vista-cuerpo";
 import { BotonAccion, Formulario } from "@/components/formulario";
 import { Titulo } from "@/components/taos/encabezado";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -15,11 +16,12 @@ export default async function Medidas() {
   const ultima = medidas.at(-1);
   return (
     <div className="grid gap-4">
-      <Titulo detalle="Con una cinta métrica, cada semana o cada mes. Tu personaje se redibuja solo.">Medidas</Titulo>
+      <Titulo detalle="Con una cinta métrica, cada semana o cada mes. Mira cómo cambia tu personaje mientras escribes.">Medidas</Titulo>
       <Card id="medir">
         <CardTitle className="mb-1">Nuevas medidas</CardTitle>
         <CardDescription className="mb-4">Siempre igual: en la mañana y antes de comer.</CardDescription>
         <Formulario accion={guardarMedida} boton="Guardar medidas" limpiar>
+          <VistaPreviaCuerpo perfil={perfil} anterior={ultima} />
           <CamposMedida anterior={ultima} />
         </Formulario>
       </Card>
