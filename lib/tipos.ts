@@ -24,7 +24,7 @@ export const NOMBRES_NIVEL: Record<Nivel, string> = { principiante: "Principiant
 export const NOMBRES_LUGAR: Record<Lugar, string> = {
   gimnasio: "Gimnasio",
   casa_mancuernas: "Casa con mancuernas",
-  casa_sin_equipo: "Casa sin equipo",
+  casa_sin_equipo: "Casa sin aparatos (solo tu cuerpo)",
 };
 export const NOMBRES_ACTIVIDAD: Record<Actividad, string> = {
   sedentaria: "Casi todo el día sentado",

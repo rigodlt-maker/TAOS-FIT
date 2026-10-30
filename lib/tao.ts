@@ -21,7 +21,7 @@ export type DatosTao = {
   hoy: string;
 };
 
-export const EJEMPLOS_TAO = ["¿Qué entreno hoy?", "¿Qué como hoy?", "¿Cuántas calorías me tocan?", "¿Cómo voy con mi peso?", "¿Cómo se hace la sentadilla?", "¿Qué como en vez de pollo?"];
+export const EJEMPLOS_TAO = ["¿Qué entreno hoy?", "¿Qué como hoy?", "¿Cuántas calorías me tocan?", "¿Cómo voy con mi peso?", "¿Puedo entrenar en casa?", "¿Qué como en vez de pollo?"];
 
 // Minúsculas y sin acentos, para comparar sin importar cómo se escriba
 export const normalizar = (t: string) =>
@@ -130,6 +130,12 @@ export function responderTao(pregunta: string, d: DatosTao): string {
 
   if (/^(hola|buenas|buenos dias|buenas tardes|que onda|hey)\b/.test(q) && q.split(" ").length <= 3) return `¡Hola, ${d.perfil.nombre}! 👋\n\n${AYUDA}`;
   if (/\b(ayuda|que puedes|que sabes|como funcionas|que haces)\b/.test(q)) return AYUDA;
+
+  // Entrenar en casa (lo más pedido en la encuesta)
+  if (/\b(en casa|sin aparatos|sin gym|sin gimnasio|sin equipo|sin pesas)\b/.test(q) && !/\b(como se hace|tecnica)\b/.test(q)) {
+    if (d.perfil.lugar === "casa_sin_equipo") return `Tu rutina ya es **en casa sin aparatos**: solo con tu cuerpo, una silla firme y un tapete.\n\n${entrenoDeHoy(d)}`;
+    return "¡Sí! En [Mi perfil](/perfil) cambia **Dónde entrenas** a **Casa sin aparatos** y te armo la rutina solo con tu cuerpo (sentadillas, lagartijas, zancadas, plancha…). Si tienes mancuernas o ligas, elige **Casa con pesas**.";
+  }
 
   // Cómo se hace un ejercicio
   const ejercicio = buscarEjercicio(q);

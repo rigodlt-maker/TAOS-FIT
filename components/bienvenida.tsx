@@ -193,9 +193,9 @@ export function Bienvenida() {
             valor="gimnasio"
             columnas={3}
             opciones={[
-              { valor: "gimnasio", titulo: "Gimnasio", icono: "🏢" },
-              { valor: "casa_mancuernas", titulo: "Casa con pesas", icono: "🏠" },
-              { valor: "casa_sin_equipo", titulo: "Sin equipo", icono: "🤸" },
+              { valor: "gimnasio", titulo: "Gimnasio", icono: "🏢", detalle: "Con aparatos" },
+              { valor: "casa_mancuernas", titulo: "Casa con pesas", icono: "🏠", detalle: "Mancuernas o ligas" },
+              { valor: "casa_sin_equipo", titulo: "Casa sin aparatos", icono: "🤸", detalle: "Solo tu cuerpo" },
             ]}
           />
         </div>
