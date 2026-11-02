@@ -94,3 +94,12 @@ test("el avatar se ensancha de cintura al subir la medida", () => {
   assert.ok(ancho(ancho2.silueta) > ancho(flaco.silueta));
   assert.ok(flaco.definicion > ancho2.definicion, "con menos grasa se marcan más los músculos");
 });
+
+test("consejo según la hora de entrenar", async () => {
+  const { avisoPorHora } = await import("../lib/entreno");
+  assert.match(avisoPorHora(22)!, /versión ligera/);
+  assert.match(avisoPorHora(2)!, /versión ligera/);
+  assert.match(avisoPorHora(6)!, /calienta/);
+  assert.equal(avisoPorHora(10), null);
+  assert.equal(avisoPorHora(20), null);
+});

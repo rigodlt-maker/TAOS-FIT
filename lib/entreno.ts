@@ -30,3 +30,16 @@ export function fechaBonita(fecha: string) {
 }
 
 export const descanso = (seg: number) => (seg >= 60 ? `${Math.floor(seg / 60)}${seg % 60 ? `:${String(seg % 60).padStart(2, "0")}` : ""} min` : `${seg} s`);
+
+// Hora de ahora en México (0 a 23)
+export function horaLocal(): number {
+  return Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Mexico_City", hour: "numeric", hour12: false }).format(new Date())) % 24;
+}
+
+// Consejo según la hora a la que vas a entrenar (de noche cuida tu sueño; muy temprano, calienta más)
+export function avisoPorHora(hora: number): string | null {
+  if (hora >= 21 || hora < 5)
+    return "🌙 Es tarde para entrenar fuerte. Si vas a entrenar, haz la versión ligera: 2 series por ejercicio, sin llegar al fallo y sin cardio intenso. O pásalo a mañana: dormir bien también es progreso.";
+  if (hora < 7) return "☀️ Entreno temprano: calienta 2 o 3 minutos más de lo normal, el cuerpo todavía está frío.";
+  return null;
+}

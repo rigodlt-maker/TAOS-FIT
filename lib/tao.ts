@@ -9,6 +9,7 @@ import { calcularObjetivos } from "./nutricion";
 import { registroPendiente, tocaEntrenar } from "./semana";
 import type { Ajuste, Medida, Perfil, Plan, Registro, Serie } from "./tipos";
 import type { TipoComida } from "./alimentos";
+import { conOpciones } from "./opciones";
 
 export type DatosTao = {
   perfil: Perfil;
@@ -189,5 +190,5 @@ export function responderTao(pregunta: string, d: DatosTao): string {
 
   if (ejercicio) return `**${ejercicio.nombre}**\n${ejercicio.pasos.map((p) => `- ${p}`).join("\n")}\n\nVe las fotos en [Ejercicios](/ejercicios).`;
 
-  return `No estoy seguro de qué me preguntas. 🤔\n\n${AYUDA}`;
+  return conOpciones("No estoy seguro de qué me preguntas. 🤔 ¿Te refieres a alguna de estas?", ["¿Qué entreno hoy?", "¿Qué como hoy?", "¿Cómo voy?", "¿Cuánto me falta para mi meta?"]);
 }

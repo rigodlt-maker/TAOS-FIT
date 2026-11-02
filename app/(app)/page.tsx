@@ -6,7 +6,7 @@ import { FotoEjercicio } from "@/components/foto-ejercicio";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { alimentoPorId } from "@/lib/alimentos";
 import { ejercicioPorId } from "@/lib/ejercicios";
-import { diaQueToca, entrenosSemana, fechaBonita, hoyLocal, sumarDias } from "@/lib/entreno";
+import { avisoPorHora, diaQueToca, entrenosSemana, fechaBonita, horaLocal, hoyLocal, sumarDias } from "@/lib/entreno";
 import { NOMBRE_COMIDA, macros } from "@/lib/menu";
 import { indiceDia, menuVigente } from "@/lib/menu-actual";
 import { calcularObjetivos } from "@/lib/nutricion";
@@ -29,6 +29,7 @@ export default async function Hoy({ searchParams }: { searchParams: Promise<{ bi
   const toca = plan ? diaQueToca(plan, series, hoy) : null;
   const dia = plan && toca ? plan.dias[toca.dia] : null;
   const entrenar = toca?.yaHoy || tocaEntrenar(perfil, hoy, semana);
+  const avisoHora = entrenar && !toca?.yaHoy ? avisoPorHora(horaLocal()) : null;
   const menu = await menuVigente(repo, perfil, ultima);
   const comidasHoy = menu?.dias[indiceDia(hoy)]?.comidas ?? [];
   const metas = ultima ? calcularObjetivos(perfil, ultima) : null;
@@ -51,6 +52,12 @@ export default async function Hoy({ searchParams }: { searchParams: Promise<{ bi
           </p>
         </div>
       </div>
+
+      {avisoHora && (
+        <Card className="border-primary/40">
+          <p className="text-sm">{avisoHora}</p>
+        </Card>
+      )}
 
       {bienvenida && (
         <Card className="border-primary/60">

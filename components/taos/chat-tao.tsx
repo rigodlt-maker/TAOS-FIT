@@ -3,7 +3,8 @@
 // Chat sencillo con Tao: manda la pregunta a /api/tao y muestra la respuesta (va dentro de la hoja de Tao)
 import { ArrowUp, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Markdown } from "../markdown";
+import { Microfono } from "./microfono";
+import { RespuestaTao } from "./respuesta-tao";
 
 type Mensaje = { pregunta: string; respuesta: string | null };
 
@@ -51,7 +52,11 @@ export function ChatTao({ ejemplos, placeholder = "Pregúntale a Tao…" }: { ej
         <div key={i} className="grid gap-2">
           <p className="max-w-[85%] justify-self-end rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-primary-foreground">{m.pregunta}</p>
           <div className="max-w-[95%] rounded-2xl rounded-bl-sm border bg-card px-4 py-3 text-[15px]">
-            {m.respuesta === null ? <Loader2 className="size-5 animate-spin text-muted-foreground" /> : <Markdown texto={m.respuesta} />}
+            {m.respuesta === null ? (
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
+            ) : (
+              <RespuestaTao texto={m.respuesta} onOpcion={i === mensajes.length - 1 && !ocupado ? enviar : undefined} />
+            )}
           </div>
         </div>
       ))}
@@ -71,6 +76,7 @@ export function ChatTao({ ejemplos, placeholder = "Pregúntale a Tao…" }: { ej
           aria-label="Tu pregunta"
           className="h-12 w-full min-w-0 rounded-full border bg-card px-5 text-base focus-visible:outline-2 focus-visible:outline-primary"
         />
+        <Microfono onTexto={enviar} onParcial={setTexto} />
         <button
           type="submit"
           disabled={ocupado || !texto.trim()}
