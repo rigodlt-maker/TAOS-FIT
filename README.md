@@ -8,8 +8,8 @@ Tu entrenador personal en el celular: rutina a tu medida (objetivo, nivel, días
 
 1. Toca el botón y entra con GitHub.
 2. Pega las variables (abajo) y toca **Deploy**.
-3. En Supabase › Authentication › URL Configuration, agrega la dirección de tu app + `/auth/callback`.
-4. Abre tu app: la primera vez te da el código para Supabase › SQL Editor (un solo pegado).
+3. Abre tu app (botón **Visit**). Ella misma te guía: revisa tus variables, te da el código para Supabase › SQL Editor y te deja crear tu contraseña al momento, sin esperar correos. Es la misma contraseña para tus 4 apps.
+4. Solo si un día olvidas tu contraseña: en Supabase › Authentication › URL Configuration › Redirect URLs agrega la dirección de tu app + `/auth/callback` (la app te la da con botón de copiar).
 
 | Variable | Qué pegar |
 | --- | --- |

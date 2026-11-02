@@ -1,6 +1,7 @@
-import { ArrowLeftRight, Flame } from "lucide-react";
+import { ArrowLeftRight } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Calentamiento } from "@/components/calentamiento";
 import { Cronometro } from "@/components/cronometro";
 import { FotoEjercicio } from "@/components/foto-ejercicio";
 import { BotonAccion, Formulario } from "@/components/formulario";
@@ -8,6 +9,7 @@ import { Titulo } from "@/components/taos/encabezado";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/campos";
 import { cambiarEjercicioSiempre, guardarEjercicio } from "@/lib/acciones";
+import { calentamiento, minutosDe } from "@/lib/calentamiento";
 import { ejercicioPorId } from "@/lib/ejercicios";
 import { diaQueToca, fechaBonita, hoyLocal } from "@/lib/entreno";
 import { sesionesDe, sugerir } from "@/lib/progresion";
@@ -37,6 +39,8 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
   };
   const enPlan = dia.ejercicios.map((e) => e.ejercicio);
   const primero = dia.ejercicios[0];
+  const zonas = dia.ejercicios.flatMap((e) => ejercicioPorId(cambiosHoy.get(e.ejercicio) ?? e.ejercicio)?.zonas ?? []);
+  const movs = calentamiento(zonas, perfil.lesiones, perfil.lugar);
   const pesoPrimero = primero ? sugerir(primero, series.filter((s) => s.ejercicio === (cambiosHoy.get(primero.ejercicio) ?? primero.ejercicio) && s.fecha < hoy)).peso : null;
 
   return (
@@ -51,22 +55,16 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
       </nav>
       {perfil.volumen < 1 && <p className="rounded-xl border px-4 py-3 text-sm">📉 Esta semana va con 20% menos series porque registraste poca energía o sueño.</p>}
 
-      <Card>
-        <div className="flex items-center gap-2">
-          <Flame className="size-5 text-primary" />
-          <CardTitle className="text-base">Calentamiento (5–8 min)</CardTitle>
-        </div>
-        <ol className="mt-2 grid list-decimal gap-1 pl-5 text-sm text-muted-foreground">
-          <li>3–5 min de caminadora, bici o saltos suaves.</li>
-          <li>10 círculos de brazos, 10 de cadera y 10 sentadillas sin peso.</li>
-          {primero && (
-            <li>
-              Aproximación de {ejercicioPorId(cambiosHoy.get(primero.ejercicio) ?? primero.ejercicio)?.nombre}:{" "}
-              {pesoPrimero ? `10 reps con ${redondear(pesoPrimero * 0.5)} kg y 5 con ${redondear(pesoPrimero * 0.75)} kg.` : "10 reps ligeras y 5 a medio peso."}
-            </li>
-          )}
-        </ol>
-      </Card>
+      <Calentamiento
+        movimientos={movs}
+        minutos={minutosDe(movs)}
+        clave={`${hoy}-${indice}`}
+        aproximacion={
+          primero
+            ? `${ejercicioPorId(cambiosHoy.get(primero.ejercicio) ?? primero.ejercicio)?.nombre}: ${pesoPrimero ? `10 reps con ${redondear(pesoPrimero * 0.5)} kg y 5 con ${redondear(pesoPrimero * 0.75)} kg.` : "10 reps ligeras y 5 a medio peso."}`
+            : undefined
+        }
+      />
 
       {dia.ejercicios.map((original, n) => {
         const id = cambiosHoy.get(original.ejercicio) ?? original.ejercicio;
