@@ -30,7 +30,8 @@ export function Formulario({
       className={cn("grid gap-3", className)}
       action={(f) =>
         iniciar(async () => {
-          const r = await accion(f);
+          // Si se va el internet, no se pierde lo escrito ni sale la pantalla de error: avisa y deja reintentar
+          const r = await accion(f).catch(() => ({ ok: false as const, mensaje: "No se pudo guardar: revisa tu conexión y toca otra vez. Lo que escribiste sigue aquí." }));
           setResultado(r);
           if (r.ok) {
             if (limpiar) ref.current?.reset();

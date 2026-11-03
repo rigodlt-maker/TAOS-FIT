@@ -2,7 +2,8 @@ import { ArrowLeftRight, Dumbbell, House } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Calentamiento } from "@/components/calentamiento";
-import { Cronometro } from "@/components/cronometro";
+import { BorradorSeries } from "@/components/borrador-series";
+import { Descanso } from "@/components/descanso";
 import { FotoEjercicio } from "@/components/foto-ejercicio";
 import { BotonAccion, Formulario } from "@/components/formulario";
 import { Titulo } from "@/components/taos/encabezado";
@@ -50,6 +51,15 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
   const movs = calentamiento(zonas, perfil.lesiones, perfilHoy.lugar);
   const pesoPrimero = primero ? sugerir(primero, series.filter((s) => s.ejercicio === (cambiosHoy.get(primero.ejercicio) ?? primero.ejercicio) && s.fecha < hoy)).peso : null;
 
+  // Qué ejercicios ya terminaste hoy (todas sus series guardadas)
+  const visibles = dia.ejercicios.filter((o) => !casa.sinEquivalente.includes(o.ejercicio));
+  const terminado = (o: (typeof dia.ejercicios)[number]) => {
+    const id = cambiosHoy.get(o.ejercicio) ?? o.ejercicio;
+    return series.filter((s) => s.ejercicio === id && s.fecha === hoy).length >= conVolumen({ ...o, ejercicio: id }, perfil.volumen).series;
+  };
+  const hechos = visibles.filter(terminado).length;
+  const todos = hechos === visibles.length;
+
   return (
     <div className="grid gap-4">
       <Titulo detalle={`${dia.enfoque}. Anota peso y repeticiones de cada serie y toca Guardar.`}>{dia.nombre}</Titulo>
@@ -88,6 +98,18 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
         }
       />
 
+      <div className="grid gap-2 rounded-2xl border bg-card px-4 py-3" aria-label="Avance del entrenamiento">
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-medium">
+            {hechos} de {visibles.length} ejercicios listos
+          </span>
+          {todos && <span className="text-primary">¡Completo! 🎉</span>}
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-muted">
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${visibles.length ? (hechos / visibles.length) * 100 : 0}%` }} />
+        </div>
+      </div>
+
       {dia.ejercicios.map((original, n) => {
         if (casa.sinEquivalente.includes(original.ejercicio)) return null;
         const id = cambiosHoy.get(original.ejercicio) ?? original.ejercicio;
@@ -101,90 +123,104 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
         const filas = Math.max(e.series, deHoy.length);
         const otros = alternativas(original.ejercicio, perfilHoy, [...enPlan, ...cambiosHoy.values()]).slice(0, 3);
         const cambiado = id !== original.ejercicio;
+        const hecho = deHoy.length >= e.series;
         return (
-          <Card key={original.ejercicio}>
-            <div className="mb-3 flex gap-3">
-              <Link href={`/ejercicios/${id}`} className="shrink-0">
-                <FotoEjercicio id={id} nombre={ej.nombre} className="size-24" />
-              </Link>
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">
-                  Ejercicio {n + 1} de {dia.ejercicios.length}
-                  {cambiado && ` · en vez de ${ejercicioPorId(original.ejercicio)?.nombre}`}
-                </p>
-                <CardTitle className="text-base leading-tight">{ej.nombre}</CardTitle>
-                <p className="mt-1 text-sm font-semibold">
-                  {sug.meta}
-                  {e.rir !== undefined && !e.segundos && <span className="font-normal text-muted-foreground"> · deja {e.rir} en reserva</span>}
-                </p>
-                <p className={cn("mt-1 text-xs", COLORES[sug.tipo])}>{sug.mensaje}</p>
-              </div>
-            </div>
-            {ultima && (
-              <p className="mb-3 rounded-lg bg-muted px-3 py-2 text-xs">
-                <strong>La última vez</strong> ({fechaBonita(ultima[0].fecha)}): {ultima.map((x) => `${x.peso_kg ? `${x.peso_kg} kg × ` : ""}${x.reps}`).join(" · ")}
-              </p>
-            )}
-            <Formulario accion={guardarEjercicio} boton={deHoy.length ? "Actualizar" : "Guardar"}>
-              <input type="hidden" name="ejercicio" value={id} />
-              <input type="hidden" name="dia" value={indice} />
-              <div className="grid grid-cols-[2rem_1fr_1fr_4.5rem] items-center gap-2 text-sm">
-                <span className="text-xs text-muted-foreground">#</span>
-                <span className="text-xs text-muted-foreground">{ej.equipo === "corporal" ? "Extra (kg)" : "Peso (kg)"}</span>
-                <span className="text-xs text-muted-foreground">{e.segundos ? "Segundos" : "Reps"}</span>
-                <span className="text-xs text-muted-foreground">RIR</span>
-                {Array.from({ length: filas }, (_, i) => (
-                  <div key={i} className="contents">
-                    <span className="text-center font-semibold">{i + 1}</span>
-                    <Input name="peso" inputMode="decimal" aria-label={`Peso serie ${i + 1}`} defaultValue={deHoy[i]?.peso_kg ?? sug.peso ?? ""} placeholder={ej.equipo === "corporal" ? "0" : "kg"} />
-                    <Input name="reps" inputMode="numeric" aria-label={`Repeticiones serie ${i + 1}`} defaultValue={deHoy[i]?.reps ?? ""} placeholder={`${e.reps_min}–${e.reps_max}`} />
-                    <select name="rir" aria-label={`Repeticiones en reserva serie ${i + 1}`} defaultValue={deHoy[i]?.rir ?? ""} className="min-h-12 rounded-xl border bg-background px-2">
-                      <option value="">–</option>
-                      {[0, 1, 2, 3, 4].map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
-              </div>
-              <label className="flex min-h-11 items-center gap-3 text-sm text-muted-foreground">
-                <input type="checkbox" name="dolor" defaultChecked={deHoy[0]?.nota === "dolor"} className="size-5 accent-[#f87171]" />
-                Sentí dolor agudo o mareo
-              </label>
-            </Formulario>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Cronometro segundos={e.descanso_seg} />
-              {otros.length > 0 && (
-                <details className="w-full">
-                  <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm text-primary">
-                    <ArrowLeftRight className="size-4" /> ¿Está ocupado? Cámbialo por hoy
-                  </summary>
-                  <div className="mt-2 grid gap-2">
-                    {otros.map((o) => (
-                      <Link key={o.id} href={enlace(new Map([...cambiosHoy, [original.ejercicio, o.id]]))} className="flex items-center gap-3 rounded-xl border p-2 text-sm active:bg-muted">
-                        <FotoEjercicio id={o.id} nombre={o.nombre} quieta className="size-12 shrink-0" />
-                        {o.nombre}
-                      </Link>
-                    ))}
-                  </div>
-                </details>
-              )}
-              {/* Un cambio de "en casa" no se regresa ni se guarda: tu rutina del gym sigue igual */}
-              {cambiado && casa.cambios.get(original.ejercicio) !== id && (
-                <div className="flex w-full flex-wrap gap-2">
-                  <Link href={enlace(new Map([...cambiosHoy].filter(([v]) => v !== original.ejercicio)))} className="flex min-h-11 items-center rounded-xl border px-3 text-sm">
-                    Regresar al original
-                  </Link>
-                  {!enCasa && (
-                    <BotonAccion accion={cambiarEjercicioSiempre.bind(null, original.ejercicio, id)} variant="outline" size="sm">
-                      Usar este siempre
-                    </BotonAccion>
-                  )}
+          <Card key={original.ejercicio} className={cn(hecho && "border-primary/50")}>
+            {hecho && (
+              <div className="flex items-center gap-3">
+                <FotoEjercicio id={id} nombre={ej.nombre} quieta className="size-14 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-primary">✓ Hecho · ejercicio {n + 1} de {dia.ejercicios.length}</p>
+                  <p className="truncate font-semibold">{ej.nombre}</p>
+                  <p className="text-sm text-muted-foreground">{deHoy.map((x) => `${x.peso_kg ? `${x.peso_kg} kg × ` : ""}${x.reps}`).join(" · ")}</p>
                 </div>
+              </div>
+            )}
+            <Plegable abierto={!hecho}>
+              <div className="mb-3 flex gap-3">
+                <Link href={`/ejercicios/${id}`} className="shrink-0">
+                  <FotoEjercicio id={id} nombre={ej.nombre} className="size-24" />
+                </Link>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">
+                    Ejercicio {n + 1} de {dia.ejercicios.length}
+                    {cambiado && ` · en vez de ${ejercicioPorId(original.ejercicio)?.nombre}`}
+                  </p>
+                  <CardTitle className="text-base leading-tight">{ej.nombre}</CardTitle>
+                  <p className="mt-1 text-sm font-semibold">
+                    {sug.meta}
+                    {e.rir !== undefined && !e.segundos && <span className="font-normal text-muted-foreground"> · deja {e.rir} en reserva</span>}
+                  </p>
+                  <p className={cn("mt-1 text-xs", COLORES[sug.tipo])}>{sug.mensaje}</p>
+                </div>
+              </div>
+              {ultima && (
+                <p className="mb-3 rounded-lg bg-muted px-3 py-2 text-xs">
+                  <strong>La última vez</strong> ({fechaBonita(ultima[0].fecha)}): {ultima.map((x) => `${x.peso_kg ? `${x.peso_kg} kg × ` : ""}${x.reps}`).join(" · ")}
+                </p>
               )}
-            </div>
+              <Formulario accion={guardarEjercicio} boton={deHoy.length ? "Actualizar" : "Guardar"}>
+                <input type="hidden" name="ejercicio" value={id} />
+                <input type="hidden" name="dia" value={indice} />
+                <BorradorSeries clave={`${indice}:${id}`} hoy={hoy} />
+                <div className="grid grid-cols-[2rem_1fr_1fr_4.5rem] items-center gap-2 text-sm">
+                  <span className="text-xs text-muted-foreground">#</span>
+                  <span className="text-xs text-muted-foreground">{ej.equipo === "corporal" ? "Extra (kg)" : "Peso (kg)"}</span>
+                  <span className="text-xs text-muted-foreground">{e.segundos ? "Segundos" : "Reps"}</span>
+                  <span className="text-xs text-muted-foreground">RIR</span>
+                  {Array.from({ length: filas }, (_, i) => (
+                    <div key={i} className="contents">
+                      <span className="text-center font-semibold">{i + 1}</span>
+                      <Input name="peso" inputMode="decimal" aria-label={`Peso serie ${i + 1}`} defaultValue={deHoy[i]?.peso_kg ?? sug.peso ?? ""} placeholder={ej.equipo === "corporal" ? "0" : "kg"} />
+                      <Input name="reps" inputMode="numeric" aria-label={`Repeticiones serie ${i + 1}`} defaultValue={deHoy[i]?.reps ?? ""} placeholder={`${e.reps_min}–${e.reps_max}`} />
+                      <select name="rir" aria-label={`Repeticiones en reserva serie ${i + 1}`} defaultValue={deHoy[i]?.rir ?? ""} className="min-h-12 rounded-xl border bg-background px-2">
+                        <option value="">–</option>
+                        {[0, 1, 2, 3, 4].map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+                <label className="flex min-h-11 items-center gap-3 text-sm text-muted-foreground">
+                  <input type="checkbox" name="dolor" defaultChecked={deHoy[0]?.nota === "dolor"} className="size-5 accent-[#f87171]" />
+                  Sentí dolor agudo o mareo
+                </label>
+              </Formulario>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Descanso segundos={e.descanso_seg} de={`${indice}:${id}`} />
+                {otros.length > 0 && (
+                  <details className="w-full">
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm text-primary">
+                      <ArrowLeftRight className="size-4" /> ¿Está ocupado? Cámbialo por hoy
+                    </summary>
+                    <div className="mt-2 grid gap-2">
+                      {otros.map((o) => (
+                        <Link key={o.id} href={enlace(new Map([...cambiosHoy, [original.ejercicio, o.id]]))} className="flex items-center gap-3 rounded-xl border p-2 text-sm active:bg-muted">
+                          <FotoEjercicio id={o.id} nombre={o.nombre} quieta className="size-12 shrink-0" />
+                          {o.nombre}
+                        </Link>
+                      ))}
+                    </div>
+                  </details>
+                )}
+                {/* Un cambio de "en casa" no se regresa ni se guarda: tu rutina del gym sigue igual */}
+                {cambiado && casa.cambios.get(original.ejercicio) !== id && (
+                  <div className="flex w-full flex-wrap gap-2">
+                    <Link href={enlace(new Map([...cambiosHoy].filter(([v]) => v !== original.ejercicio)))} className="flex min-h-11 items-center rounded-xl border px-3 text-sm">
+                      Regresar al original
+                    </Link>
+                    {!enCasa && (
+                      <BotonAccion accion={cambiarEjercicioSiempre.bind(null, original.ejercicio, id)} variant="outline" size="sm">
+                        Usar este siempre
+                      </BotonAccion>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Plegable>
           </Card>
         );
       })}
@@ -195,6 +231,13 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
           <CardDescription>Caminadora inclinada, bici o elíptica a un ritmo en el que puedas hablar con esfuerzo.</CardDescription>
         </Card>
       )}
+      <Link
+        href={`/entrenar/listo?dia=${indice}`}
+        className={cn("flex min-h-14 items-center justify-center gap-2 rounded-2xl text-base font-semibold", todos ? "bg-primary text-primary-foreground" : "border")}
+      >
+        🏁 {todos ? "Terminar entrenamiento" : `Terminar entrenamiento (${hechos} de ${visibles.length})`}
+      </Link>
+
       <details className="rounded-2xl border bg-card p-4 text-sm">
         <summary className="cursor-pointer font-medium">¿Qué es RIR?</summary>
         <p className="mt-2 text-muted-foreground">
@@ -203,5 +246,16 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
         </p>
       </details>
     </div>
+  );
+}
+
+// Un ejercicio terminado se pliega: queda el resumen y "Corregir" para cambiar algo
+function Plegable({ abierto, children }: { abierto: boolean; children: React.ReactNode }) {
+  if (abierto) return <>{children}</>;
+  return (
+    <details className="mt-2">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center text-sm text-primary">Corregir o ver detalle</summary>
+      <div className="mt-2">{children}</div>
+    </details>
   );
 }

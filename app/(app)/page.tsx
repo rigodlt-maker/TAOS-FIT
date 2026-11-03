@@ -14,6 +14,7 @@ import { indiceDia, menuVigente } from "@/lib/menu-actual";
 import { calcularObjetivos } from "@/lib/nutricion";
 import { obtenerRepo } from "@/lib/sesion";
 import { registroPendiente, tocaEntrenar } from "@/lib/semana";
+import { ContinuarEntreno } from "@/components/continuar-entreno";
 
 const saludo = () => {
   const h = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Mexico_City", hour: "numeric", hour12: false }).format(new Date())) % 24;
@@ -57,6 +58,8 @@ export default async function Hoy({ searchParams }: { searchParams: Promise<{ bi
       <Suspense fallback={null}>
         <MedallasHoy />
       </Suspense>
+
+      <ContinuarEntreno />
 
       {avisoHora && (
         <Card className="border-primary/40">
