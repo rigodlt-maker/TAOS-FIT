@@ -16,9 +16,9 @@ type Paleta = {
 
 const PALETAS: Record<Nivel | "bloqueado", Paleta> = {
   bronce: { borde: "#f2b382", marcoClaro: "#d48a55", marcoOscuro: "#5e2f17", cara: "#5c2e1c", dibujo: "#f3c7a2", acento: "#4fe3d0" },
-  plata: { borde: "#eef3f5", marcoClaro: "#c3ccd1", marcoOscuro: "#4d575d", cara: "#47535a", dibujo: "#e6eef1", acento: "#4fe3d0" },
+  plata: { borde: "#cfd6da", marcoClaro: "#aeb8be", marcoOscuro: "#3f474c", cara: "#3c454b", dibujo: "#e6eef1", acento: "#4fe3d0" },
   oro: { borde: "#fbe3a0", marcoClaro: "#e6be6c", marcoOscuro: "#6e4d1a", cara: "#96703c", dibujo: "#f8e7c0", acento: "#4fe3d0", halo: "#ffd36b" },
-  platino: { borde: "#ffffff", marcoClaro: "#f1f5f7", marcoOscuro: "#7f8c93", cara: "#66737a", dibujo: "#f6fafb", acento: "#62f2e0", halo: "#e9fbff" },
+  platino: { borde: "#ffffff", marcoClaro: "#ffffff", marcoOscuro: "#9fb4bf", cara: "#7d97a5", dibujo: "#ffffff", acento: "#7ffcf0", halo: "#e9fbff" },
   onix: { borde: "#55525e", marcoClaro: "#3a3842", marcoOscuro: "#020203", cara: "#060608", dibujo: "#a3a2ab", acento: "#9a7cf2", halo: "#7b55e0" },
   bloqueado: { borde: "#5a4434", marcoClaro: "#3f2d22", marcoOscuro: "#160f0b", cara: "#24180f", dibujo: "#2fa597", acento: "#2fa597" },
 };
