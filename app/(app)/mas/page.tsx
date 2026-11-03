@@ -1,4 +1,4 @@
-import { CalendarPlus, ClipboardCheck, Dumbbell, MapPin, Palette, Ruler, Salad, UserRound } from "lucide-react";
+import { Award, CalendarPlus, ClipboardCheck, Dumbbell, MapPin, Palette, Ruler, Salad, UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import Link from "next/link";
@@ -48,6 +48,7 @@ export default async function Yo() {
         </div>
       </Card>
       <div className="grid grid-cols-2 gap-3">
+        <Mosaico href="/medallas" icono={Award} titulo="Mis medallas" detalle="Tu álbum: colecciónalas todas" />
         <Mosaico href="/perfil" icono={UserRound} titulo="Mi perfil" detalle="Meta, días, comida y molestias" />
         <Mosaico href="/cuerpo" icono={Ruler} titulo="Medidas" detalle="Peso y cinta; tu personaje cambia" />
         <Mosaico href="/personaje" icono={Palette} titulo="Mi personaje" detalle="Cara, pelo y ropa" />

@@ -1,8 +1,10 @@
 import { CalendarCheck, ChevronRight, Flame, HeartPulse, Sparkles, Target, Utensils } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import { FotoEjercicio } from "@/components/foto-ejercicio";
+import { MedallasHoy } from "@/components/medallas-hoy";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { alimentoPorId } from "@/lib/alimentos";
 import { ejercicioPorId } from "@/lib/ejercicios";
@@ -52,6 +54,9 @@ export default async function Hoy({ searchParams }: { searchParams: Promise<{ bi
           </p>
         </div>
       </div>
+      <Suspense fallback={null}>
+        <MedallasHoy />
+      </Suspense>
 
       {avisoHora && (
         <Card className="border-primary/40">

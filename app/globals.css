@@ -56,3 +56,16 @@ summary {
 main {
   min-width: 0;
 }
+
+/* ---------- Medallas ---------- */
+.panal { display: grid; justify-items: center; padding: 4px 0 8px; }
+.panal-fila { display: flex; gap: 6px; margin-top: -14px; }
+.panal-fila:first-child { margin-top: 0; }
+.panal-celda { display: block; border-radius: 12px; transition: transform 0.15s; }
+.panal-celda:active { transform: scale(0.94); }
+.panal-celda.elegida { filter: drop-shadow(0 0 8px rgb(212 175 55 / 0.7)); }
+.insignia-gira { animation: insignia-gira 1.2s ease-out; }
+.festejo { animation: festejo-entra 0.35s ease-out; }
+@keyframes insignia-gira { from { transform: rotateY(540deg) scale(0.3); } to { transform: none; } }
+@keyframes festejo-entra { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .insignia-gira, .festejo { animation: none; } }
