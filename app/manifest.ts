@@ -18,6 +18,7 @@ export default function manifest(): MetadataRoute.Manifest {
     // Atajos: al dejar presionado el ícono de la app (Android) aparecen estos accesos directos
     shortcuts: [
       { name: "Entrenar hoy", short_name: "Entrenar", url: "/entrenar" },
+      { name: "Entrenar en casa", short_name: "En casa", url: "/entrenar?casa=1" },
       { name: "Comida de hoy", short_name: "Comida", url: "/comida" },
       { name: "Registro semanal", short_name: "Registro", url: "/registro" },
     ],

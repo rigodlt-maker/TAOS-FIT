@@ -211,5 +211,27 @@ export function alternativas(ejercicio: string, p: Perfil, excluir: string[] = [
   return candidatos(ej.patron, p, `alt:${ejercicio}`).filter((x) => x.id !== ejercicio && !excluir.includes(x.id));
 }
 
+// "Hoy entreno en casa": cambia por hoy cada ejercicio que necesita aparatos por uno del mismo movimiento con tu propio peso.
+// Si ese movimiento no se puede hacer sin equipo (p. ej. jalón sin barra), se usa otro útil con tu peso; si no queda ninguno, se salta.
+const RELLENO_EN_CASA: Patron[] = ["remo", "empuje_horizontal", "triceps", "core", "gluteo", "unilateral", "sentadilla", "bisagra", "femoral"];
+export function aCasa(ejercicios: string[], p: Perfil): { cambios: Map<string, string>; sinEquivalente: string[] } {
+  const enCasa: Perfil = { ...p, lugar: "casa_sin_equipo" };
+  const equipo = equipoDisponible(enCasa);
+  const cambios = new Map<string, string>();
+  const sinEquivalente: string[] = [];
+  const usados = new Set(ejercicios.filter((id) => equipo.has(EJERCICIOS.find((x) => x.id === id)?.equipo ?? "maquina")));
+  for (const id of ejercicios) {
+    if (usados.has(id)) continue;
+    const otro =
+      alternativas(id, enCasa, [...usados])[0] ??
+      RELLENO_EN_CASA.map((patron) => candidatos(patron, enCasa, `casa:${id}`).find((x) => !usados.has(x.id))).find(Boolean);
+    if (otro) {
+      cambios.set(id, otro.id);
+      usados.add(otro.id);
+    } else sinEquivalente.push(id);
+  }
+  return { cambios, sinEquivalente };
+}
+
 // Menos series cuando estás cansado (volumen 0.8 = 20% menos), mínimo 1 serie
 export const conVolumen = (e: EjercicioPlan, volumen: number): EjercicioPlan => (volumen >= 1 ? e : { ...e, series: Math.max(1, Math.round(e.series * volumen)) });

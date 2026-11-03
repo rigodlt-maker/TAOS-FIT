@@ -112,6 +112,11 @@ export default async function Hoy({ searchParams }: { searchParams: Promise<{ bi
           <Link href={`/entrenar?dia=${toca.dia}`} className={`flex min-h-12 items-center justify-center rounded-xl font-semibold ${entrenar ? "bg-primary text-primary-foreground" : "border"}`}>
             {toca.yaHoy ? "Ver o corregir lo de hoy" : entrenar ? "Empezar entrenamiento" : "Adelantar este entrenamiento"}
           </Link>
+          {!toca.yaHoy && perfil.lugar !== "casa_sin_equipo" && (
+            <Link href={`/entrenar?dia=${toca.dia}&casa=1`} className="flex min-h-11 items-center justify-center text-sm text-primary">
+              🏠 ¿No vas a ir? Hoy entreno en casa
+            </Link>
+          )}
         </Card>
       )}
 

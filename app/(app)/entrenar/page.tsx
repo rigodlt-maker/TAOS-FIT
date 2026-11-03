@@ -1,4 +1,4 @@
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, Dumbbell, House } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Calentamiento } from "@/components/calentamiento";
@@ -13,14 +13,14 @@ import { calentamiento, minutosDe } from "@/lib/calentamiento";
 import { ejercicioPorId } from "@/lib/ejercicios";
 import { diaQueToca, fechaBonita, hoyLocal } from "@/lib/entreno";
 import { sesionesDe, sugerir } from "@/lib/progresion";
-import { alternativas, conVolumen } from "@/lib/rutina";
+import { aCasa, alternativas, conVolumen } from "@/lib/rutina";
 import { obtenerRepo } from "@/lib/sesion";
 import { cn } from "@/lib/utils";
 
 const COLORES = { nuevo: "text-muted-foreground", subir: "text-primary", mantener: "text-muted-foreground", bajar: "text-destructive", estancado: "text-destructive" };
 const redondear = (kg: number) => Math.max(0, Math.round(kg / 2.5) * 2.5);
 
-export default async function Entrenar({ searchParams }: { searchParams: Promise<{ dia?: string; c?: string | string[] }> }) {
+export default async function Entrenar({ searchParams }: { searchParams: Promise<{ dia?: string; c?: string | string[]; casa?: string }> }) {
   const params = await searchParams;
   const repo = await obtenerRepo();
   const [perfil, plan, series] = await Promise.all([repo.perfil(), repo.planActivo(), repo.series()]);
@@ -30,17 +30,24 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
   const indice = Number.isInteger(pedido) && pedido >= 0 && pedido < plan.dias.length ? pedido : diaQueToca(plan, series).dia;
   const dia = plan.dias[indice];
   const hoy = hoyLocal();
-  // Cambios solo por hoy: ?c=viejo:nuevo (por ejemplo, el aparato está ocupado)
-  const cambiosHoy = new Map((Array.isArray(params.c) ? params.c : params.c ? [params.c] : []).map((x) => x.split(":") as [string, string]).filter(([v, n]) => ejercicioPorId(v) && ejercicioPorId(n)));
+  const enPlan = dia.ejercicios.map((e) => e.ejercicio);
+  // "Hoy entreno en casa" (?casa=1): por hoy, todo con tu propio peso. Tu rutina del gym no cambia.
+  const puedeCasa = perfil.lugar !== "casa_sin_equipo";
+  const enCasa = puedeCasa && params.casa === "1";
+  const casa = enCasa ? aCasa(enPlan, perfil) : { cambios: new Map<string, string>(), sinEquivalente: [] as string[] };
+  const perfilHoy = enCasa ? { ...perfil, lugar: "casa_sin_equipo" as const } : perfil;
+  // Cambios solo por hoy: ?c=viejo:nuevo (por ejemplo, el aparato está ocupado); tienen prioridad sobre los de "en casa"
+  const pedidos = (Array.isArray(params.c) ? params.c : params.c ? [params.c] : []).map((x) => x.split(":") as [string, string]).filter(([v, n]) => ejercicioPorId(v) && ejercicioPorId(n));
+  const cambiosHoy = new Map([...casa.cambios, ...pedidos]);
   const enlace = (extra: Map<string, string>) => {
     const q = new URLSearchParams({ dia: String(indice) });
-    for (const [v, n] of extra) q.append("c", `${v}:${n}`);
+    if (enCasa) q.set("casa", "1");
+    for (const [v, n] of extra) if (casa.cambios.get(v) !== n) q.append("c", `${v}:${n}`);
     return `/entrenar?${q}`;
   };
-  const enPlan = dia.ejercicios.map((e) => e.ejercicio);
   const primero = dia.ejercicios[0];
   const zonas = dia.ejercicios.flatMap((e) => ejercicioPorId(cambiosHoy.get(e.ejercicio) ?? e.ejercicio)?.zonas ?? []);
-  const movs = calentamiento(zonas, perfil.lesiones, perfil.lugar);
+  const movs = calentamiento(zonas, perfil.lesiones, perfilHoy.lugar);
   const pesoPrimero = primero ? sugerir(primero, series.filter((s) => s.ejercicio === (cambiosHoy.get(primero.ejercicio) ?? primero.ejercicio) && s.fecha < hoy)).peso : null;
 
   return (
@@ -53,6 +60,21 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
           </Link>
         ))}
       </nav>
+      {puedeCasa && (
+        <Link
+          href={enCasa ? `/entrenar?dia=${indice}` : `/entrenar?dia=${indice}&casa=1`}
+          className={cn("flex min-h-12 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-medium", enCasa && "border-primary text-primary")}
+        >
+          {enCasa ? <Dumbbell className="size-5" /> : <House className="size-5" />}
+          {enCasa ? "Volver a mi rutina normal" : "Hoy entreno en casa (sin aparatos)"}
+        </Link>
+      )}
+      {enCasa && (
+        <p className="rounded-xl border border-primary/60 px-4 py-3 text-sm">
+          🏠 Hoy en casa: cambié lo que necesita aparatos por ejercicios con tu propio peso. Tu rutina normal sigue igual.
+          {casa.sinEquivalente.length > 0 && ` Hoy te saltas ${casa.sinEquivalente.map((x) => ejercicioPorId(x)?.nombre).join(", ")}.`}
+        </p>
+      )}
       {perfil.volumen < 1 && <p className="rounded-xl border px-4 py-3 text-sm">📉 Esta semana va con 20% menos series porque registraste poca energía o sueño.</p>}
 
       <Calentamiento
@@ -67,6 +89,7 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
       />
 
       {dia.ejercicios.map((original, n) => {
+        if (casa.sinEquivalente.includes(original.ejercicio)) return null;
         const id = cambiosHoy.get(original.ejercicio) ?? original.ejercicio;
         const e = conVolumen({ ...original, ejercicio: id }, perfil.volumen);
         const ej = ejercicioPorId(id);
@@ -76,7 +99,7 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
         const sug = sugerir(e, historial, perfil.pausa_hasta, hoy);
         const ultima = sesionesDe(historial, id)[0];
         const filas = Math.max(e.series, deHoy.length);
-        const otros = alternativas(original.ejercicio, perfil, enPlan).slice(0, 3);
+        const otros = alternativas(original.ejercicio, perfilHoy, [...enPlan, ...cambiosHoy.values()]).slice(0, 3);
         const cambiado = id !== original.ejercicio;
         return (
           <Card key={original.ejercicio}>
@@ -148,14 +171,17 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
                   </div>
                 </details>
               )}
-              {cambiado && (
+              {/* Un cambio de "en casa" no se regresa ni se guarda: tu rutina del gym sigue igual */}
+              {cambiado && casa.cambios.get(original.ejercicio) !== id && (
                 <div className="flex w-full flex-wrap gap-2">
                   <Link href={enlace(new Map([...cambiosHoy].filter(([v]) => v !== original.ejercicio)))} className="flex min-h-11 items-center rounded-xl border px-3 text-sm">
                     Regresar al original
                   </Link>
-                  <BotonAccion accion={cambiarEjercicioSiempre.bind(null, original.ejercicio, id)} variant="outline" size="sm">
-                    Usar este siempre
-                  </BotonAccion>
+                  {!enCasa && (
+                    <BotonAccion accion={cambiarEjercicioSiempre.bind(null, original.ejercicio, id)} variant="outline" size="sm">
+                      Usar este siempre
+                    </BotonAccion>
+                  )}
                 </div>
               )}
             </div>
