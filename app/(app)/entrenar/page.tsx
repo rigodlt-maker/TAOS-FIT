@@ -14,7 +14,7 @@ import { calentamiento, minutosDe } from "@/lib/calentamiento";
 import { ejercicioPorId } from "@/lib/ejercicios";
 import { diaQueToca, fechaBonita, hoyLocal } from "@/lib/entreno";
 import { sesionesDe, sugerir } from "@/lib/progresion";
-import { aCasa, alternativas, conVolumen } from "@/lib/rutina";
+import { aCasa, alternativas, conVolumen, prescripcion } from "@/lib/rutina";
 import { obtenerRepo } from "@/lib/sesion";
 import { cn } from "@/lib/utils";
 
@@ -51,11 +51,17 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
   const movs = calentamiento(zonas, perfil.lesiones, perfilHoy.lugar);
   const pesoPrimero = primero ? sugerir(primero, series.filter((s) => s.ejercicio === (cambiosHoy.get(primero.ejercicio) ?? primero.ejercicio) && s.fecha < hoy)).peso : null;
 
+  // Lo que toca de cada ejercicio hoy. Si "en casa" lo cambió por uno con tu peso, series y repeticiones se calculan para ese ejercicio
+  const planDe = (o: (typeof dia.ejercicios)[number], n: number) => {
+    const id = cambiosHoy.get(o.ejercicio) ?? o.ejercicio;
+    const nuevo = casa.cambios.get(o.ejercicio) === id ? ejercicioPorId(id) : undefined;
+    return conVolumen(nuevo ? { ejercicio: id, ...prescripcion(nuevo, perfil.objetivo, perfil.nivel, n) } : { ...o, ejercicio: id }, perfil.volumen);
+  };
   // Qué ejercicios ya terminaste hoy (todas sus series guardadas)
   const visibles = dia.ejercicios.filter((o) => !casa.sinEquivalente.includes(o.ejercicio));
   const terminado = (o: (typeof dia.ejercicios)[number]) => {
-    const id = cambiosHoy.get(o.ejercicio) ?? o.ejercicio;
-    return series.filter((s) => s.ejercicio === id && s.fecha === hoy).length >= conVolumen({ ...o, ejercicio: id }, perfil.volumen).series;
+    const e = planDe(o, dia.ejercicios.indexOf(o));
+    return series.filter((s) => s.ejercicio === e.ejercicio && s.fecha === hoy).length >= e.series;
   };
   const hechos = visibles.filter(terminado).length;
   const todos = hechos === visibles.length;
@@ -113,7 +119,7 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
       {dia.ejercicios.map((original, n) => {
         if (casa.sinEquivalente.includes(original.ejercicio)) return null;
         const id = cambiosHoy.get(original.ejercicio) ?? original.ejercicio;
-        const e = conVolumen({ ...original, ejercicio: id }, perfil.volumen);
+        const e = planDe(original, n);
         const ej = ejercicioPorId(id);
         if (!ej) return null;
         const historial = series.filter((s) => s.ejercicio === id && s.fecha < hoy);

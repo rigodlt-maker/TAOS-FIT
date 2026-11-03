@@ -77,7 +77,9 @@ function puntaje(ej: Ejercicio, p: Perfil, semilla: string): number {
 export function candidatos(patron: Patron, p: Perfil, semilla: string): Ejercicio[] {
   const equipo = equipoDisponible(p);
   const max = DIFICULTAD_MAX[p.nivel];
-  return EJERCICIOS.filter((ej) => ej.patron === patron && equipo.has(ej.equipo) && ej.dificultad <= max && !ej.evitar?.some((l) => p.lesiones.includes(l))).sort(
+  // Lo que necesita algo especial (barra baja, paralelas, pelota) solo se propone en el gimnasio
+  const disponible = (ej: Ejercicio) => equipo.has(ej.equipo) && (!ej.requiere || p.lugar === "gimnasio");
+  return EJERCICIOS.filter((ej) => ej.patron === patron && disponible(ej) && ej.dificultad <= max && !ej.evitar?.some((l) => p.lesiones.includes(l))).sort(
     (a, b) => puntaje(b, p, semilla) - puntaje(a, p, semilla),
   );
 }
@@ -212,8 +214,18 @@ export function alternativas(ejercicio: string, p: Perfil, excluir: string[] = [
 }
 
 // "Hoy entreno en casa": cambia por hoy cada ejercicio que necesita aparatos por uno del mismo movimiento con tu propio peso.
-// Si ese movimiento no se puede hacer sin equipo (p. ej. jalón sin barra), se usa otro útil con tu peso; si no queda ninguno, se salta.
-const RELLENO_EN_CASA: Patron[] = ["remo", "empuje_horizontal", "triceps", "core", "gluteo", "unilateral", "sentadilla", "bisagra", "femoral"];
+// Si ese movimiento no se puede hacer sin equipo (p. ej. jalón sin barra), se usa otro de LA MISMA ZONA con tu peso
+// (pierna por pierna, espalda por espalda); si no queda ninguno, se salta.
+const CASA_PIERNA: Patron[] = ["bisagra", "gluteo", "unilateral", "sentadilla", "femoral", "cuadriceps"];
+const CASA_ESPALDA: Patron[] = ["remo", "jalon", "bisagra"];
+const CASA_EMPUJE: Patron[] = ["empuje_horizontal", "empuje_vertical", "triceps", "core"];
+const CASA_CORE: Patron[] = ["core"];
+function parecidosEnCasa(ej: Ejercicio): Patron[] {
+  if (ej.zonas[0] === "piernas" || ej.zonas[0] === "gluteo") return CASA_PIERNA;
+  if (ej.zonas[0] === "espalda") return CASA_ESPALDA;
+  if (ej.zonas[0] === "abdomen") return CASA_CORE;
+  return CASA_EMPUJE;
+}
 export function aCasa(ejercicios: string[], p: Perfil): { cambios: Map<string, string>; sinEquivalente: string[] } {
   const enCasa: Perfil = { ...p, lugar: "casa_sin_equipo" };
   const equipo = equipoDisponible(enCasa);
@@ -222,9 +234,14 @@ export function aCasa(ejercicios: string[], p: Perfil): { cambios: Map<string, s
   const usados = new Set(ejercicios.filter((id) => equipo.has(EJERCICIOS.find((x) => x.id === id)?.equipo ?? "maquina")));
   for (const id of ejercicios) {
     if (usados.has(id)) continue;
+    const original = EJERCICIOS.find((x) => x.id === id)!;
+    const familia = parecidosEnCasa(original);
     const otro =
-      alternativas(id, enCasa, [...usados])[0] ??
-      RELLENO_EN_CASA.map((patron) => candidatos(patron, enCasa, `casa:${id}`).find((x) => !usados.has(x.id))).find(Boolean);
+      // Del mismo movimiento, pero que trabaje la misma zona (un peso muerto de pierna no se cambia por uno de espalda baja)
+      alternativas(id, enCasa, [...usados]).find((x) => parecidosEnCasa(x) === familia) ??
+      familia
+        .map((patron) => candidatos(patron, enCasa, `casa:${id}`).find((x) => !usados.has(x.id) && parecidosEnCasa(x) === familia))
+        .find(Boolean);
     if (otro) {
       cambios.set(id, otro.id);
       usados.add(otro.id);

@@ -18,3 +18,23 @@ test("Hoy entreno en casa: todo lo de hoy queda sin aparatos, sin repetir ejerci
     assert.ok(hoy.length >= ids.length / 2, `${dia.nombre}: se quedó casi vacío`);
   }
 });
+
+test("en casa nunca propone lo que necesita algo especial y cambia pierna por pierna, espalda por espalda", () => {
+  for (const lesiones of [[], ["espalda_baja"], ["rodilla"]] as Perfil["lesiones"][]) {
+    for (const objetivo of ["fuerza", "hipertrofia", "grasa"] as const) {
+      const p = { ...gym, lesiones, objetivo };
+      for (const dia of generarPlan(p).dias) {
+        const { cambios } = aCasa(dia.ejercicios.map((e) => e.ejercicio), p);
+        for (const [viejo, nuevo] of cambios) {
+          const a = EJERCICIOS.find((x) => x.id === viejo)!;
+          const b = EJERCICIOS.find((x) => x.id === nuevo)!;
+          assert.ok(!b.requiere, `${b.nombre} necesita ${b.requiere}`);
+          const pierna = (z: string) => z === "piernas" || z === "gluteo";
+          // Pierna/glúteo se cambia por pierna/glúteo; lo de arriba, por algo de arriba
+          assert.equal(pierna(b.zonas[0]), pierna(a.zonas[0]), `${a.nombre} → ${b.nombre}`);
+        }
+      }
+    }
+  }
+});
+

@@ -34,6 +34,7 @@ export type Ejercicio = {
   compuesto: boolean;
   zonas: Zona[];
   evitar?: Lesion[]; // no se propone si tienes esta molestia
+  requiere?: string; // algo que no hay en cualquier casa (barra baja, paralelas, pelota): no se propone fuera del gimnasio
   pasos: string[];
 };
 
@@ -76,8 +77,8 @@ const e = (
   dificultad: 1 | 2 | 3,
   zonas: Zona[],
   pasos: string[],
-  extra: { compuesto?: boolean; evitar?: Lesion[] } = {},
-): Ejercicio => ({ id, nombre, patron, equipo, dificultad, zonas, pasos, compuesto: extra.compuesto ?? false, evitar: extra.evitar });
+  extra: { compuesto?: boolean; evitar?: Lesion[]; requiere?: string } = {},
+): Ejercicio => ({ id, nombre, patron, equipo, dificultad, zonas, pasos, compuesto: extra.compuesto ?? false, evitar: extra.evitar, requiere: extra.requiere });
 
 export const EJERCICIOS: Ejercicio[] = [
   // ---------- Sentadilla ----------
@@ -194,7 +195,7 @@ export const EJERCICIOS: Ejercicio[] = [
     "En paralelas con brazos estirados, inclina un poco el torso al frente.",
     "Baja hasta que los codos formen unos 90°.",
     "Sube empujando sin encoger los hombros.",
-  ], { compuesto: true, evitar: ["hombro"] }),
+  ], { requiere: "barras paralelas", compuesto: true, evitar: ["hombro"] }),
 
   // ---------- Pecho aislado ----------
   e("Dumbbell_Flyes", "Aperturas con mancuernas", "pecho_aislado", "mancuernas", 1, ["pecho"], [
@@ -319,7 +320,7 @@ export const EJERCICIOS: Ejercicio[] = [
     "Debajo de una barra o mesa firme, cuerpo recto y talones en el piso.",
     "Jala el pecho hacia la barra.",
     "Baja controlado. Entre más horizontal, más difícil.",
-  ], { compuesto: true }),
+  ], { requiere: "una barra baja o una mesa firme", compuesto: true }),
   e("Bent_Over_Two-Dumbbell_Row", "Remo con dos mancuernas", "remo", "mancuernas", 1, ["espalda", "brazos"], [
     "Inclinado al frente, espalda recta, una mancuerna en cada mano.",
     "Jala ambas hacia la cadera.",
@@ -400,7 +401,7 @@ export const EJERCICIOS: Ejercicio[] = [
     "Boca arriba con los talones sobre una pelota (o una toalla en piso liso).",
     "Sube la cadera y jala la pelota hacia ti doblando las rodillas.",
     "Estira lento sin bajar la cadera.",
-  ]),
+  ], { requiere: "una pelota de ejercicio" }),
   e("Standing_Calf_Raises", "Elevación de talones de pie", "pantorrilla", "maquina", 1, ["piernas"], [
     "Puntas de los pies en el borde de la plataforma.",
     "Sube lo más alto que puedas sobre las puntas.",
