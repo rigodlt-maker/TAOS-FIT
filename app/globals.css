@@ -69,3 +69,7 @@ main {
 @keyframes insignia-gira { from { transform: rotateY(540deg) scale(0.3); } to { transform: none; } }
 @keyframes festejo-entra { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .insignia-gira, .festejo { animation: none; } }
+
+/* Letra grande (Ajustes › Pantalla) */
+html[data-letra="grande"] { font-size: 112.5%; }
+html[data-letra="muy-grande"] { font-size: 125%; }

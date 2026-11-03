@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import Link from "next/link";
 import { AvisosPush } from "@/components/avisos-push";
+import { TamanoLetra } from "@/components/taos/tamano-letra";
 import { FormularioContrasena } from "@/components/contrasena";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { enlaceCalendario } from "@/lib/calendario";
@@ -62,6 +63,14 @@ export default async function Yo() {
         <CardTitle className="mb-1">Notificaciones en el celular</CardTitle>
         <CardDescription className="mb-4">Te recuerdo cuándo entrenar y tu registro semanal.</CardDescription>
         <AvisosPush />
+      </Card>
+      <Card>
+        <CardTitle className="mb-1">Pantalla</CardTitle>
+        <CardDescription className="mb-4">Tamaño de la letra en este celular.</CardDescription>
+        <TamanoLetra />
+        <a href="/?recorrido=1" className="mt-3 flex min-h-11 items-center justify-center text-sm text-primary">
+          Ver el tutorial otra vez
+        </a>
       </Card>
       {repo.modo === "supabase" && (
         <Card>

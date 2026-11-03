@@ -4,6 +4,7 @@ import { Navegacion } from "@/components/navegacion";
 import { ChatTao } from "@/components/taos/chat-tao";
 import { Encabezado } from "@/components/taos/encabezado";
 import { Recorrido, type Paso } from "@/components/taos/recorrido";
+import { Campana } from "@/components/taos/campana";
 import { BotonTao } from "@/components/taos/tao";
 import { hoyLocal } from "@/lib/entreno";
 import { obtenerRepo } from "@/lib/sesion";
@@ -20,6 +21,7 @@ const RECORRIDO: Paso[] = [
   { icono: "🥗", titulo: "Tu menú", texto: "Menú mexicano de la semana con tus calorías y la lista del súper.", donde: "/comida" },
   { icono: "📈", titulo: "Progreso", texto: "Tus gráficas y el registro semanal: con él ajusto tus calorías y tu rutina.", donde: "/progreso" },
   { icono: "🏅", titulo: "Yo", texto: "Tu perfil, medidas, personaje y tus medallas.", donde: "/mas" },
+  { icono: "🔔", titulo: "Tus avisos", texto: "Aquí quedan los avisos que te manda la app, por si se te pasó alguno. El numerito te dice cuántos no has visto.", donde: "campana" },
   { icono: "🎙️", titulo: "Pregúntale a Tao", texto: "“¿Qué entreno hoy?”, “¿qué ceno?”: escribe o usa el micrófono.", donde: "tao" },
 ];
 
@@ -35,9 +37,12 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
         nombre="Tao Fit"
         derecha={
           perfil && (
-            <BotonTao>
-              <ChatTao ejemplos={EJEMPLOS_TAO} placeholder="¿Qué entreno hoy?" />
-            </BotonTao>
+            <div className="flex items-center gap-2">
+              <Campana ajustes="/mas" />
+              <BotonTao>
+                <ChatTao ejemplos={EJEMPLOS_TAO} placeholder="¿Qué entreno hoy?" />
+              </BotonTao>
+            </div>
           )
         }
       />
