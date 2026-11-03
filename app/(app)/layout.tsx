@@ -14,11 +14,13 @@ export const dynamic = "force-dynamic";
 
 // Recorrido de bienvenida (sale una sola vez)
 const RECORRIDO: Paso[] = [
-  { icono: "🏋️", titulo: "Bienvenido a Tao Fit", texto: "En Hoy ves qué te toca entrenar y comer. Todo se ajusta a tu meta, tus días y tu equipo." },
-  { icono: "✍️", titulo: "Entrena y anota", texto: "En Entrenar anota peso y repeticiones de cada serie. Fíjate en “la última vez” para superarla. Si algo duele, toca “Me duele”." },
-  { icono: "🥗", titulo: "Tu menú ya calculado", texto: "En Comida tienes tu menú mexicano de la semana y la lista del súper. ¿No te gusta algo? Cámbialo por otro." },
-  { icono: "📏", titulo: "Registro semanal", texto: "Una vez por semana anota peso, energía y sueño. Con eso Tao Fit ajusta tus calorías y tu rutina." },
-  { icono: "🎙️", titulo: "Pregúntale a Tao", texto: "Toca el botón dorado de arriba y escribe o usa el micrófono: “¿qué entreno hoy?”, “¿qué ceno?”." },
+  { icono: "🏋️", titulo: "Bienvenido a Tao Fit", texto: "Tu entrenador personal: rutina y menú hechos a tu medida. Te enseño lo básico en 1 minuto." },
+  { icono: "▶️", titulo: "Entrenar", texto: "Empieza tu entreno de hoy: calentamiento, series y “la última vez” para superarla.", donde: "flotante" },
+  { icono: "📋", titulo: "Tu rutina", texto: "Los ejercicios de cada día. ¿Aparato ocupado? Cámbialo por otro.", donde: "/rutina" },
+  { icono: "🥗", titulo: "Tu menú", texto: "Menú mexicano de la semana con tus calorías y la lista del súper.", donde: "/comida" },
+  { icono: "📈", titulo: "Progreso", texto: "Tus gráficas y el registro semanal: con él ajusto tus calorías y tu rutina.", donde: "/progreso" },
+  { icono: "🏅", titulo: "Yo", texto: "Tu perfil, medidas, personaje y tus medallas.", donde: "/mas" },
+  { icono: "🎙️", titulo: "Pregúntale a Tao", texto: "“¿Qué entreno hoy?”, “¿qué ceno?”: escribe o usa el micrófono.", donde: "tao" },
 ];
 
 export default async function LayoutApp({ children }: { children: React.ReactNode }) {
