@@ -57,6 +57,7 @@ export type Perfil = {
   alimentos_habituales: string[]; // ids de lib/alimentos
   alimentos_excluidos: string[]; // ids de alimentos o grupos ("cerdo", "lacteos"…)
   veces_cocina: number; // por semana
+  menu_economico: boolean; // menú que prefiere lo barato (huevo, frijol, pollo, tortilla…)
   dia_registro: number; // día del registro semanal (0 = domingo)
   ajuste_kcal: number; // suma de los ajustes automáticos de calorías
   volumen: number; // 1 normal, 0.8 = 20% menos series por cansancio

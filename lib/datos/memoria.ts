@@ -43,6 +43,7 @@ export const PERFIL_DEMO: Perfil = {
   alimentos_habituales: ["pollo", "huevo", "tortilla", "avena", "arroz", "frijoles", "platano", "aguacate"],
   alimentos_excluidos: [],
   veces_cocina: 3,
+  menu_economico: false,
   dia_registro: 0,
   ajuste_kcal: -150,
   volumen: 1,
@@ -175,7 +176,7 @@ export function repoMemoria(): Repo {
       if (!a.menus.length && a.perfil) {
         const ultima = a.medidas.at(-1) ?? { peso_kg: 80 };
         const o = calcularObjetivos(a.perfil, ultima);
-        const menu: Menu = generarMenu(o, { habituales: a.perfil.alimentos_habituales, excluidos: a.perfil.alimentos_excluidos, veces_cocina: a.perfil.veces_cocina }, "demo");
+        const menu: Menu = generarMenu(o, { habituales: a.perfil.alimentos_habituales, excluidos: a.perfil.alimentos_excluidos, veces_cocina: a.perfil.veces_cocina, economico: a.perfil.menu_economico }, "demo");
         a.menus.push({ ...menu, id: id(), creado: new Date().toISOString() });
       }
       return a.menus.at(-1) ?? null;

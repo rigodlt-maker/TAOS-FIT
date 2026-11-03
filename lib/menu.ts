@@ -4,6 +4,7 @@
 import { calcularObjetivos } from "./nutricion";
 import type { Medida, Perfil } from "./tipos";
 import { ALIMENTOS, ORDEN_SECCIONES, alimentoPorId, permitido, type Alimento, type Grupo, type Seccion, type TipoComida } from "./alimentos";
+import { factorEconomico } from "./precios";
 
 export type Item = { alimento: string; gramos: number };
 export type ComidaMenu = { tipo: TipoComida; items: Item[] };
@@ -11,7 +12,8 @@ export type DiaMenu = { comidas: ComidaMenu[] };
 export type Lote = { cocinar: number; dias: number[] }; // índices de día: 0 = lunes … 6 = domingo
 export type Metas = { kcal: number; proteina: number; grasa: number; carbos: number };
 export type Menu = Metas & { dias: DiaMenu[]; lotes: Lote[] | null };
-export type Preferencias = { habituales: string[]; excluidos: string[]; veces_cocina: number };
+// economico: prefiere lo que rinde más por peso (huevo, frijol, pollo, tortilla, avena…). Ver lib/precios.ts
+export type Preferencias = { habituales: string[]; excluidos: string[]; veces_cocina: number; economico?: boolean };
 
 export const DIAS_MENU = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 export const NOMBRE_COMIDA: Record<TipoComida, string> = { desayuno: "Desayuno", colacion: "Colación", comida: "Comida", cena: "Cena" };
@@ -131,7 +133,7 @@ export function generarMenu(metas: Metas, prefs: Preferencias, semilla: string):
   const azar = rng(semilla);
   // Tus alimentos habituales salen más seguido; tofu y leguminosas como plato fuerte solo si no comes carne o los marcaste
   const vegetal = ["tofu", "lentejas", "garbanzo"];
-  const peso = (al: Alimento) => (prefs.habituales.includes(al.id) ? 5 : vegetal.includes(al.id) ? 0.25 : 1);
+  const peso = (al: Alimento) => (prefs.habituales.includes(al.id) ? 5 : vegetal.includes(al.id) ? 0.25 : 1) * (prefs.economico ? factorEconomico(al) : 1);
   const elegir = (lista: Alimento[], evitar: string[] = []) => {
     const opciones = lista.filter((x) => !evitar.includes(x.id));
     const pool = opciones.length ? opciones : lista;
@@ -212,5 +214,5 @@ export function menuDeLaSemana(p: Perfil, m: Pick<Medida, "peso_kg">, usuario: s
   const o = calcularObjetivos(p, m);
   const lunes = new Date();
   lunes.setUTCDate(lunes.getUTCDate() - ((lunes.getUTCDay() + 6) % 7));
-  return generarMenu(o, { habituales: p.alimentos_habituales, excluidos: p.alimentos_excluidos, veces_cocina: p.veces_cocina }, `${usuario}:${lunes.toISOString().slice(0, 10)}:${variante}`);
+  return generarMenu(o, { habituales: p.alimentos_habituales, excluidos: p.alimentos_excluidos, veces_cocina: p.veces_cocina, economico: p.menu_economico }, `${usuario}:${lunes.toISOString().slice(0, 10)}:${variante}`);
 }

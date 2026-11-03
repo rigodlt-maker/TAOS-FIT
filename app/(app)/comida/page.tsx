@@ -4,12 +4,13 @@ import { redirect } from "next/navigation";
 import { BotonAccion } from "@/components/formulario";
 import { Titulo } from "@/components/taos/encabezado";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-import { nuevoMenu } from "@/lib/acciones";
+import { cambiarMenuEconomico, nuevoMenu } from "@/lib/acciones";
 import { alimentoPorId, porcion } from "@/lib/alimentos";
 import { hoyLocal } from "@/lib/entreno";
 import { DIAS_MENU, NOMBRE_COMIDA, macros, macrosDia, reemplazos } from "@/lib/menu";
 import { indiceDia, menuVigente } from "@/lib/menu-actual";
 import { calcularObjetivos } from "@/lib/nutricion";
+import { costoSemana } from "@/lib/precios";
 import { obtenerRepo } from "@/lib/sesion";
 import { cn } from "@/lib/utils";
 
@@ -98,6 +99,22 @@ export default async function Comida({ searchParams }: { searchParams: Promise<{
             ))}
           </ul>
         </details>
+      </Card>
+
+      <Card className="grid gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <CardTitle>💰 {perfil.menu_economico ? "Menú económico" : "¿Quieres gastar menos?"}</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Esta semana cuesta aprox. <strong className="text-foreground">${costoSemana(menu).toLocaleString("es-MX")}</strong>
+              {perfil.menu_economico ? " con huevo, frijol, pollo, tortilla, avena y fruta de temporada." : ". El menú económico usa lo que más rinde."}
+            </p>
+          </div>
+        </div>
+        <BotonAccion accion={cambiarMenuEconomico.bind(null, !perfil.menu_economico)} variant={perfil.menu_economico ? "outline" : "default"} size="default">
+          {perfil.menu_economico ? "Volver al menú normal" : "Cambiar a menú económico"}
+        </BotonAccion>
+        <p className="text-xs text-muted-foreground">Precios de referencia de súper y mercado; cambian por ciudad y temporada.</p>
       </Card>
 
       <nav className="grid grid-cols-7 gap-1" aria-label="Días">

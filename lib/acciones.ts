@@ -196,6 +196,23 @@ export async function nuevoMenu(): Promise<Resultado> {
   }
 }
 
+// Menú económico: prende o apaga y arma de una vez el menú de la semana con esa preferencia
+export async function cambiarMenuEconomico(activar: boolean): Promise<Resultado> {
+  try {
+    const repo = await obtenerRepo();
+    const perfil = await repo.perfil();
+    if (!perfil) return { ok: false, mensaje: "Primero llena tu perfil." };
+    const nuevo = { ...perfil, menu_economico: activar };
+    await repo.guardarPerfil(nuevo);
+    const medidas = await repo.medidas();
+    if (medidas.length) await repo.guardarMenu(menuDeLaSemana(nuevo, medidas.at(-1)!, repo.usuario, String(Date.now())));
+    refrescar();
+    return { ok: true, mensaje: activar ? "Listo: menú económico ✓" : "Listo: menú normal ✓" };
+  } catch (e) {
+    return error(e);
+  }
+}
+
 export async function guardarMedida(f: FormData): Promise<Resultado> {
   try {
     const repo = await obtenerRepo();
