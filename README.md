@@ -2,6 +2,8 @@
 
 Tu entrenador personal en el celular: rutina a tu medida (objetivo, nivel, días, tiempo, equipo y molestias), menú semanal con comida mexicana, registro semanal que ajusta tu plan, gráficas de progreso y un personaje que cambia con tus medidas. Todo gratis y sin IA.
 
+> **© TAOS Soluciones · Todos los derechos reservados.** Este repositorio es visible, pero no es de uso libre: solo puedes instalarlo para tu uso personal con tu código de compra de *“Organiza tu vida con TAOS”*. Prohibido copiarlo, publicarlo o revenderlo. Lee el archivo [LICENSE](LICENSE).
+
 ## Instalar
 
 [![Instalar en Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Frigodlt-maker%2FTAOS-FIT&project-name=tao-fit&repository-name=tao-fit&env=CODIGO_COMPRA,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,SUPABASE_SECRET_KEY,ALLOWED_EMAIL,CRON_SECRET&envDescription=Tu%20c%C3%B3digo%20de%20compra%20de%20Hotmart%20%28HP...%29%2C%20datos%20de%20tu%20proyecto%20de%20Supabase%2C%20tu%20correo%20y%20un%20texto%20al%20azar%20para%20los%20recordatorios)
