@@ -5,6 +5,7 @@ import { ChatTao } from "@/components/taos/chat-tao";
 import { Encabezado } from "@/components/taos/encabezado";
 import { Recorrido, type Paso } from "@/components/taos/recorrido";
 import { Campana } from "@/components/taos/campana";
+import { Actualizacion } from "@/components/taos/actualizacion";
 import { BotonTao } from "@/components/taos/tao";
 import { hoyLocal } from "@/lib/entreno";
 import { obtenerRepo } from "@/lib/sesion";
@@ -51,6 +52,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
           <strong className="text-foreground">Modo demostración:</strong> estás viendo un ejemplo con 3 meses de progreso.
         </p>
       )}
+      <Actualizacion repo="taos-fit" />
       <main>{children}</main>
       <Suspense>
         <Recorrido pasos={RECORRIDO} />
