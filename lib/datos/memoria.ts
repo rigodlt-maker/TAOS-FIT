@@ -21,7 +21,7 @@ const id = () => crypto.randomUUID();
 const dia = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
 
 export const PERFIL_DEMO: Perfil = {
-  nombre: "Alex",
+  nombre: "Rodrigo",
   genero: "hombre",
   cuerpo: "masculino",
   nacimiento: "1994-03-15",

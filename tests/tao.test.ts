@@ -29,7 +29,7 @@ test("Tao Fit entiende las preguntas más comunes", async () => {
   assert.match(r("me duele la rodilla"), /detente/);
   assert.match(r("¿por qué bajaste mis calorías?"), /ajuste/);
   assert.match(r("cuando es mi registro"), /registro/);
-  assert.match(r("hola"), /Hola, Alex/);
+  assert.match(r("hola"), /Hola, Rodrigo/);
   assert.match(r("asdf qwer"), /No estoy seguro/);
   assert.match(r("¿puedo entrenar en casa sin aparatos?"), /Casa sin aparatos/);
 });
