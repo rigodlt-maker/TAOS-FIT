@@ -33,7 +33,12 @@ export function evaluarSemana(p: Perfil, registros: Registro[], plan: Plan | nul
   }
 
   // 2) Calorías: solo con 3 semanas de datos y buena adherencia
-  if (w1 && w2) {
+  // Solo cuenta como "semanas" si entre registro y registro pasaron de 5 a 14 días
+  const dias = (a: string, b: string) => Math.round((Date.parse(`${a}T12:00:00Z`) - Date.parse(`${b}T12:00:00Z`)) / 86_400_000);
+  const semanal = (a?: Registro, b?: Registro) => !!a && !!b && dias(a.fecha, b.fecha) >= 5 && dias(a.fecha, b.fecha) <= 14;
+  if (w1 && w2 && !(semanal(w0, w1) && semanal(w1, w2)))
+    r.consejos.push("Para ajustar tus calorías necesito registros con una semana de distancia (entre 5 y 14 días). Registra una vez por semana, el mismo día.");
+  else if (w1 && w2) {
     const c1 = pct(w0.peso_kg, w1.peso_kg);
     const c2 = pct(w1.peso_kg, w2.peso_kg);
     const ultimas4 = lista.slice(-5);
@@ -100,4 +105,14 @@ export function evaluarSemana(p: Perfil, registros: Registro[], plan: Plan | nul
 // Aplica los cambios de ejercicio a un plan (nueva versión)
 export function planConCambios(plan: Plan, cambios: Evaluacion["cambios"]) {
   return plan.dias.map((d) => ({ ...d, ejercicios: d.ejercicios.map((e) => ({ ...e, ejercicio: cambios.find((c) => c.ejercicio === e.ejercicio)?.nuevo ?? e.ejercicio })) }));
+}
+
+// Cuántas calorías movieron los ajustes ya guardados (p. ej. "−150 kcal al día" → −150)
+export function kcalDe(ajustes: { tipo: string; detalle: string }[]): number {
+  return ajustes
+    .filter((a) => a.tipo === "calorias")
+    .reduce((t, a) => {
+      const m = a.detalle.match(/([+−-])\s*(\d+)\s*kcal/);
+      return m ? t + (m[1] === "+" ? 1 : -1) * Number(m[2]) : t;
+    }, 0);
 }

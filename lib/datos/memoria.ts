@@ -171,6 +171,9 @@ export function repoMemoria(): Repo {
     async guardarAjustes(nuevos) {
       a.ajustes.push(...nuevos.map((x) => ({ ...x, id: id() })));
     },
+    async borrarAjustesDelDia(fecha) {
+      a.ajustes = a.ajustes.filter((x) => x.fecha !== fecha);
+    },
     async menuActivo() {
       // El ejemplo arma su menú la primera vez que se pide
       if (!a.menus.length && a.perfil) {

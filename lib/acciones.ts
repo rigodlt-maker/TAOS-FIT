@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { evaluarSemana, planConCambios } from "./ajustes";
+import { evaluarSemana, kcalDe, planConCambios } from "./ajustes";
 import { normalizarApariencia } from "./avatar";
 import { FALTA_SQL } from "./datos/repo";
 import type { Lesion, Zona } from "./ejercicios";
@@ -89,7 +89,12 @@ function leerMedida(f: FormData): Omit<Medida, "id"> {
     if (v !== null && (Number.isNaN(v) || v < 15 || v > 250)) throw new Error(`Revisa la medida de ${campo.replace("_cm", "")}: va en centímetros.`);
     return v;
   };
-  const fecha = /^\d{4}-\d{2}-\d{2}$/.test(texto(f, "fecha")) ? texto(f, "fecha") : hoyLocal();
+  const escrita = texto(f, "fecha");
+  const fecha = escrita || hoyLocal();
+  // Fecha real (sin 30 de febrero ni mes 13) y que no sea del futuro
+  const d = new Date(`${fecha}T12:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== fecha) throw new Error("Revisa la fecha: esa fecha no existe.");
+  if (fecha > hoyLocal()) throw new Error("La fecha no puede ser después de hoy.");
   return { fecha, peso_kg: peso, cintura_cm: cm("cintura_cm"), cadera_cm: cm("cadera_cm"), pecho_cm: cm("pecho_cm"), brazo_cm: cm("brazo_cm"), muslo_cm: cm("muslo_cm"), cuello_cm: cm("cuello_cm") };
 }
 
@@ -295,14 +300,26 @@ export async function guardarRegistro(f: FormData): Promise<Resultado> {
     await repo.guardarMedida({ ...m, pecho_cm: m.pecho_cm ?? previa?.pecho_cm ?? null, muslo_cm: m.muslo_cm ?? previa?.muslo_cm ?? null, cuello_cm: m.cuello_cm ?? previa?.cuello_cm ?? null });
 
     const [registros, plan, series] = await Promise.all([repo.registros(), repo.planActivo(), repo.series({ desde: sumarDias(m.fecha, -90) })]);
-    const ev = evaluarSemana(perfil, registros, plan, series, hoyLocal());
-    const nuevo = { ...perfil, ...ev.perfil };
-    if (Object.keys(ev.perfil).length) await repo.guardarPerfil(nuevo);
-    if (plan && ev.cambios.length) await repo.crearPlan(planConCambios(plan, ev.cambios), plan.notas);
+    // Si corriges un registro viejo, no se vuelve a evaluar: solo cuenta el más reciente
+    const ultimo = [...registros].sort((a, b) => a.fecha.localeCompare(b.fecha)).at(-1);
+    if (ultimo?.fecha !== m.fecha) {
+      refrescar();
+      destino = `/registro/listo?n=0&c=${encodeURIComponent(JSON.stringify(["Corregimos ese registro. Los ajustes solo se calculan con tu registro más reciente."]))}`;
+    } else {
+    // Repetir el registro del mismo día reemplaza su evaluación (no la suma otra vez): se parte de las calorías de antes
+    const previos = (await repo.ajustes(200)).filter((a) => a.fecha === m.fecha);
+    const base = { ...perfil, ajuste_kcal: perfil.ajuste_kcal - kcalDe(previos) };
+    const ev = evaluarSemana(base, registros, plan, series, hoyLocal());
+    const nuevo = { ...base, ...ev.perfil };
+    if (Object.keys(ev.perfil).length || nuevo.ajuste_kcal !== perfil.ajuste_kcal) await repo.guardarPerfil(nuevo);
+    // El ejercicio solo se cambia la primera vez (si ya se cambió con este registro, no se cambia otra vez)
+    if (plan && ev.cambios.length && !previos.some((a) => a.tipo === "ejercicio")) await repo.crearPlan(planConCambios(plan, ev.cambios), plan.notas);
+    if (previos.length) await repo.borrarAjustesDelDia(m.fecha);
     await repo.guardarAjustes(ev.ajustes.map((a) => ({ ...a, fecha: m.fecha })));
-    if (ev.perfil.ajuste_kcal !== undefined) await rehacerMenu(repo, nuevo, `ajuste-${m.fecha}`);
+    if (nuevo.ajuste_kcal !== perfil.ajuste_kcal) await rehacerMenu(repo, nuevo, `ajuste-${m.fecha}`);
     refrescar();
     destino = `/registro/listo?n=${ev.ajustes.length}&c=${encodeURIComponent(JSON.stringify(ev.consejos))}`;
+    }
   } catch (e) {
     return error(e);
   }

@@ -1,7 +1,7 @@
 // Calorías, menú, lista del súper, reglas del registro semanal y compatibilidad con perfiles viejos (datos inventados)
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ALERTA_SALUD, evaluarSemana } from "../lib/ajustes";
+import { ALERTA_SALUD, evaluarSemana, kcalDe } from "../lib/ajustes";
 import { ALIMENTOS, alimentoPorId, permitido, porcion } from "../lib/alimentos";
 import { normalizarApariencia } from "../lib/avatar";
 import { generarMenu, listaDeCompras, macrosDia, reemplazos } from "../lib/menu";
@@ -137,4 +137,30 @@ test("el SQL que muestra la app es el mismo de la migración", async () => {
   const { SQL_INSTALAR } = await import("../lib/sql");
   assert.equal(SQL_INSTALAR, readFileSync("supabase/instalar.sql", "utf8"));
   for (const m of ["0001_tao_fit.sql", "0002_push.sql", "0003_coach.sql"]) assert.ok(SQL_INSTALAR.includes(readFileSync(`supabase/migrations/${m}`, "utf8").trim()), m);
+});
+
+test("S10: repetir el mismo registro no vuelve a restar calorías (se parte de las de antes)", () => {
+  const regs = [reg(0, 80, { adherencia: 100 }), reg(1, 80, { adherencia: 100 }), reg(2, 80, { adherencia: 100 })];
+  const primero = evaluarSemana(yo, regs, null, [], "2026-09-15");
+  assert.equal(primero.perfil.ajuste_kcal, -150);
+  // Segunda vez, con el perfil ya ajustado: la app quita lo que ya aplicó ese día antes de evaluar
+  const ajustado = { ...yo, ajuste_kcal: -150 };
+  const guardados = primero.ajustes.map((a) => ({ ...a, fecha: "2026-09-15" }));
+  const base = { ...ajustado, ajuste_kcal: ajustado.ajuste_kcal - kcalDe(guardados) };
+  assert.equal(evaluarSemana(base, regs, null, [], "2026-09-15").perfil.ajuste_kcal, -150);
+  assert.equal(kcalDe([{ tipo: "calorias", detalle: "+100 kcal al día" }, { tipo: "volumen", detalle: "20% menos" }]), 100);
+});
+
+test("T01: registros muy juntos o muy separados no cuentan como semanas", () => {
+  const r = (fecha: string, peso = 80): Registro => ({ ...reg(0, peso), id: fecha, fecha, adherencia: 100 });
+  // 1, 2 y 3 de noviembre: no son 3 semanas
+  assert.equal(evaluarSemana(yo, [r("2026-11-01"), r("2026-11-02"), r("2026-11-03")], null, [], "2026-11-03").perfil.ajuste_kcal, undefined);
+  // cada 4 días: tampoco
+  assert.equal(evaluarSemana(yo, [r("2026-11-01"), r("2026-11-05"), r("2026-11-09")], null, [], "2026-11-09").perfil.ajuste_kcal, undefined);
+  // cada mes: tampoco
+  assert.equal(evaluarSemana(yo, [r("2026-08-01"), r("2026-09-01"), r("2026-10-01")], null, [], "2026-10-01").perfil.ajuste_kcal, undefined);
+  // cada 5 días: sí
+  assert.equal(evaluarSemana(yo, [r("2026-10-25"), r("2026-10-30"), r("2026-11-04")], null, [], "2026-11-04").perfil.ajuste_kcal, -150);
+  // aunque lleguen desordenados
+  assert.equal(evaluarSemana(yo, [r("2026-11-03"), r("2026-10-20"), r("2026-10-27")], null, [], "2026-11-03").perfil.ajuste_kcal, -150);
 });

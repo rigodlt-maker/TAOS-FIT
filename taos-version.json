@@ -2,6 +2,8 @@
   "version": "1.2.1",
   "fecha": "2026-11-10",
   "novedades": [
-    "Más seguridad: la primera vez, para crear tu contraseña te pedimos tu código de compra (el mismo que pusiste en Vercel)."
+    "Más seguridad: la primera vez, para crear tu contraseña te pedimos tu código de compra (el mismo que pusiste en Vercel).",
+    "Registro semanal: si lo guardas dos veces el mismo día, las calorías no se ajustan dos veces.",
+    "Las calorías solo se ajustan con registros de una semana de distancia (de 5 a 14 días)."
   ]
 }

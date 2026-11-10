@@ -123,12 +123,16 @@ export function repoSupabase(db: SupabaseClient, uid: string): Repo {
     },
     async guardarRegistro(reg) {
       // Uno por día: si lo repites el mismo día, se reemplaza
-      revisar(await db.from("fit_checkins").delete().eq("user_id", uid).eq("fecha", reg.fecha));
-      revisar(await db.from("fit_checkins").insert({ ...reg, user_id: uid }));
+      // Primero se guarda el nuevo y después se quita el anterior: si algo falla, no te quedas sin registro
+      const nuevo = revisar(await db.from("fit_checkins").insert({ ...reg, user_id: uid }).select("id").single()) as { id: string };
+      revisar(await db.from("fit_checkins").delete().eq("user_id", uid).eq("fecha", reg.fecha).neq("id", nuevo.id));
     },
 
     async ajustes(limite = 50) {
       return opcional(await de("fit_adjustments", "id, fecha, tipo, detalle, motivo").order("created_at", { ascending: false }).limit(limite), []) as unknown as Ajuste[];
+    },
+    async borrarAjustesDelDia(fecha) {
+      revisar(await db.from("fit_adjustments").delete().eq("user_id", uid).eq("fecha", fecha));
     },
     async guardarAjustes(a) {
       if (a.length) revisar(await db.from("fit_adjustments").insert(a.map((x) => ({ ...x, user_id: uid }))));

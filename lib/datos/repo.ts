@@ -29,6 +29,7 @@ export interface Repo {
 
   ajustes(limite?: number): Promise<Ajuste[]>; // del más nuevo al más viejo
   guardarAjustes(a: Omit<Ajuste, "id">[]): Promise<void>;
+  borrarAjustesDelDia(fecha: string): Promise<void>; // al repetir un registro, su evaluación se reemplaza (no se suma)
 
   menuActivo(): Promise<MenuGuardado | null>;
   guardarMenu(m: Menu): Promise<string>;
