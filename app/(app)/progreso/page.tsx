@@ -105,15 +105,19 @@ export default async function Progreso({ searchParams }: { searchParams: Promise
       </Card>
 
       <Card>
-        <CardTitle className="mb-2 text-base">Medidas</CardTitle>
-        <Grafica
-          series={[
-            { nombre: "Cintura", color: COLORES[0], puntos: medida("cintura_cm") },
-            { nombre: "Cadera", color: COLORES[2], puntos: medida("cadera_cm") },
-            { nombre: "Brazo", color: COLORES[1], puntos: medida("brazo_cm") },
-          ]}
-          unidad="cm"
-        />
+        <CardTitle className="mb-1 text-base">Medidas</CardTitle>
+        <CardDescription className="mb-2">Una gráfica por medida, cada una con su propia escala.</CardDescription>
+        <div className="grid gap-4">
+          {(
+            [
+              ["Cintura", "cintura_cm", COLORES[0]],
+              ["Cadera", "cadera_cm", COLORES[2]],
+              ["Brazo", "brazo_cm", COLORES[1]],
+            ] as const
+          ).map(([nombre, campo, color]) => (
+            <Grafica key={campo} series={[{ nombre, color, puntos: medida(campo) }]} unidad="cm" alto={100} />
+          ))}
+        </div>
       </Card>
 
       <Card>

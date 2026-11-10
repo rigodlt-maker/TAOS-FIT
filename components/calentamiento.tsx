@@ -124,7 +124,7 @@ export function Calentamiento({ movimientos, minutos, aproximacion, clave }: { m
         ))}
       </ol>
       {aproximacion && <p className="mt-3 text-sm text-muted-foreground">Al final, series de aproximación: {aproximacion}</p>}
-      <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
+      <div className="mt-3 grid gap-2 min-[440px]:grid-cols-[1fr_auto]">
         <Button type="button" onClick={() => ir(0)}>
           <Play className="size-5" /> Empezar calentamiento
         </Button>

@@ -82,7 +82,8 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
           className={cn("flex min-h-12 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-medium", enCasa && "border-primary text-primary")}
         >
           {enCasa ? <Dumbbell className="size-5" /> : <House className="size-5" />}
-          {enCasa ? "Volver a mi rutina normal" : "Hoy entreno en casa (sin aparatos)"}
+          <span className="flex-1">{enCasa ? "Hoy entreno en casa · toca para volver a tu rutina normal" : "Hoy entreno en casa · ejercicios sin aparatos"}</span>
+          <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs", enCasa ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>{enCasa ? "Activado" : "Apagado"}</span>
         </Link>
       )}
       {enCasa && (
@@ -99,7 +100,7 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
         clave={`${hoy}-${indice}`}
         aproximacion={
           primero
-            ? `${ejercicioPorId(cambiosHoy.get(primero.ejercicio) ?? primero.ejercicio)?.nombre}: ${pesoPrimero ? `10 reps con ${redondear(pesoPrimero * 0.5)} kg y 5 con ${redondear(pesoPrimero * 0.75)} kg.` : "10 reps ligeras y 5 a medio peso."}`
+            ? `${ejercicioPorId(cambiosHoy.get(primero.ejercicio) ?? primero.ejercicio)?.nombre}: ${enCasa ? "10 reps lentas y 5 a tu ritmo normal." : pesoPrimero ? `10 reps con ${redondear(pesoPrimero * 0.5)} kg y 5 con ${redondear(pesoPrimero * 0.75)} kg.` : "10 reps ligeras y 5 a medio peso."}`
             : undefined
         }
       />

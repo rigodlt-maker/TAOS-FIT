@@ -138,7 +138,7 @@ export default async function Hoy({ searchParams }: { searchParams: Promise<{ bi
               {comidasHoy.map((c, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="w-20 shrink-0 text-muted-foreground">{NOMBRE_COMIDA[c.tipo]}</span>
-                  <span className="min-w-0 flex-1 truncate">{c.items.map((it) => alimentoPorId(it.alimento)?.nombre).join(", ")}</span>
+                  <span className="line-clamp-2 min-w-0 flex-1">{c.items.map((it) => alimentoPorId(it.alimento)?.nombre).join(", ")}</span>
                   <span className="shrink-0 text-xs text-muted-foreground">{Math.round(macros(c.items).kcal)}</span>
                 </li>
               ))}
