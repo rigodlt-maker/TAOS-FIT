@@ -1,7 +1,8 @@
 {
-  "version": "1.3.1",
+  "version": "1.3.2",
   "fecha": "2026-11-25",
   "novedades": [
+    "Progreso › Medidas: cada mini gráfica ahora dice qué medida es y cuánto llevas hoy.",
     "Comida: lo que excluyes ya nunca aparece en tu menú. Nueva opción «Sin frutos secos ni semillas» (nuez, almendra, cacahuate y crema de cacahuate).",
     "Comida: ahora puedes quitar cualquier alimento uno por uno en Menú › Perfil › Tu comida («¿Algo más que no comes?»).",
     "Comida: «Sin pescado» y «Sin mariscos» van por separado. Si ya tenías «Sin pescado ni mariscos», sigues sin los dos.",

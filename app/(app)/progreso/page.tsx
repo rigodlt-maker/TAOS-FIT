@@ -114,9 +114,21 @@ export default async function Progreso({ searchParams }: { searchParams: Promise
               ["Cadera", "cadera_cm", COLORES[2]],
               ["Brazo", "brazo_cm", COLORES[1]],
             ] as const
-          ).map(([nombre, campo, color]) => (
-            <Grafica key={campo} series={[{ nombre, color, puntos: medida(campo) }]} unidad="cm" alto={100} />
-          ))}
+          ).map(([nombre, campo, color]) => {
+            const puntos = medida(campo);
+            const ultima = puntos.at(-1)?.valor;
+            // Cada mini gráfica dice qué medida es y cuánto llevas hoy (con una sola serie la gráfica no muestra leyenda)
+            return (
+              <div key={campo} className="grid gap-1">
+                <p className="flex items-center gap-2 text-sm font-medium">
+                  <span className="size-2.5 rounded-full" style={{ background: color }} />
+                  {nombre}
+                  {ultima != null && <span className="text-muted-foreground">· {ultima.toLocaleString("es-MX", { maximumFractionDigits: 1 })} cm</span>}
+                </p>
+                <Grafica series={[{ nombre, color, puntos }]} unidad="cm" alto={100} />
+              </div>
+            );
+          })}
         </div>
       </Card>
 
