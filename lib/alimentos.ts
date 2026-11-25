@@ -4,7 +4,7 @@
 export type Grupo = "proteina" | "carbo" | "fruta" | "verdura" | "grasa";
 export type TipoComida = "desayuno" | "colacion" | "comida" | "cena";
 export type Seccion = "Frutas y verduras" | "Carnes y pescados" | "Lácteos y huevo" | "Tortillas y pan" | "Abarrotes" | "Congelados";
-export type Etiqueta = "res" | "cerdo" | "pollo" | "pescado" | "mariscos" | "huevo" | "lacteos" | "gluten";
+export type Etiqueta = "res" | "cerdo" | "pollo" | "pescado" | "mariscos" | "huevo" | "lacteos" | "gluten" | "frutos_secos";
 
 export type Alimento = {
   id: string;
@@ -17,6 +17,8 @@ export type Alimento = {
   c: number; // carbohidratos (g)
   comidas: TipoComida[];
   etiquetas?: Etiqueta[];
+  // 1.3.1: ya no sale en menús nuevos (se reemplazó), pero se sigue encontrando para los menús guardados
+  oculto?: boolean;
   pieza?: { nombre: string; g: number }; // para mostrar "2 tortillas" en vez de gramos
   min?: number; // gramos mínimos y máximos por comida
   max?: number;
@@ -98,7 +100,11 @@ export const ALIMENTOS: Alimento[] = [
   a("calabacita", "Calabacita", "verdura", "Frutas y verduras", [17, 1.2, 0.3, 3.1], CC, { min: 80, max: 250 }),
   a("brocoli", "Brócoli", "verdura", "Frutas y verduras", [35, 2.4, 0.4, 7.2], CC, { min: 80, max: 250 }),
   a("espinaca", "Espinaca", "verdura", "Frutas y verduras", [23, 2.9, 0.4, 3.6], DCC, { min: 50, max: 200 }),
-  a("ensalada", "Lechuga, jitomate y pepino", "verdura", "Frutas y verduras", [16, 0.9, 0.2, 3.3], CC, { min: 100, max: 300 }),
+  a("ensalada", "Lechuga, jitomate y pepino", "verdura", "Frutas y verduras", [16, 0.9, 0.2, 3.3], CC, { min: 100, max: 300, oculto: true }),
+  // 1.3.1 (feedback de piloto): cada verdura por separado, para poder quitar la que no comes
+  a("lechuga", "Lechuga", "verdura", "Frutas y verduras", [15, 1.4, 0.2, 2.9], CC, { min: 50, max: 200 }),
+  a("jitomate", "Jitomate", "verdura", "Frutas y verduras", [18, 0.9, 0.2, 3.9], CC, { min: 50, max: 250 }),
+  a("pepino", "Pepino", "verdura", "Frutas y verduras", [15, 0.7, 0.1, 3.6], CC, { min: 50, max: 250 }),
   a("zanahoria", "Zanahoria", "verdura", "Frutas y verduras", [41, 0.9, 0.2, 9.6], CC, { min: 60, max: 200 }),
   a("chayote", "Chayote", "verdura", "Frutas y verduras", [19, 0.8, 0.1, 4.5], CC, { min: 80, max: 250 }),
   a("ejotes", "Ejotes", "verdura", "Frutas y verduras", [31, 1.8, 0.2, 7], CC, { min: 80, max: 250 }),
@@ -110,25 +116,38 @@ export const ALIMENTOS: Alimento[] = [
   // ---------- Grasas ----------
   a("aguacate", "Aguacate", "grasa", "Frutas y verduras", [160, 2, 14.7, 8.5], DCC, { min: 20, max: 100 }),
   a("aceite_oliva", "Aceite de oliva", "grasa", "Abarrotes", [884, 0, 100, 0], CC, { pieza: { nombre: "cucharadita", g: 5 }, min: 5, max: 20 }),
-  a("crema_cacahuate", "Crema de cacahuate", "grasa", "Abarrotes", [588, 25, 50, 20], DC, { pieza: { nombre: "cucharada", g: 16 }, min: 8, max: 32 }),
-  a("almendras", "Almendras", "grasa", "Abarrotes", [579, 21, 50, 21.6], DC, { min: 10, max: 40 }),
-  a("nueces", "Nueces", "grasa", "Abarrotes", [654, 15, 65, 14], DC, { min: 10, max: 35 }),
-  a("cacahuates", "Cacahuates naturales", "grasa", "Abarrotes", [567, 26, 49, 16], ["colacion"], { min: 10, max: 40 }),
+  a("crema_cacahuate", "Crema de cacahuate", "grasa", "Abarrotes", [588, 25, 50, 20], DC, { pieza: { nombre: "cucharada", g: 16 }, min: 8, max: 32, etiquetas: ["frutos_secos"] }),
+  a("almendras", "Almendras", "grasa", "Abarrotes", [579, 21, 50, 21.6], DC, { min: 10, max: 40, etiquetas: ["frutos_secos"] }),
+  a("nueces", "Nueces", "grasa", "Abarrotes", [654, 15, 65, 14], DC, { min: 10, max: 35, etiquetas: ["frutos_secos"] }),
+  a("cacahuates", "Cacahuates naturales", "grasa", "Abarrotes", [567, 26, 49, 16], ["colacion"], { min: 10, max: 40, etiquetas: ["frutos_secos"] }),
 ];
 
 export const alimentoPorId = (id: string) => ALIMENTOS.find((x) => x.id === id);
 
-// Grupos que puedes excluir de un toque
-export const EXCLUSIONES: { id: string; nombre: string; etiquetas: Etiqueta[]; ids?: string[] }[] = [
+// Grupos que puedes excluir de un toque. Son filtros DUROS: nada de un grupo excluido sale en el menú, en «Cambiar»,
+// en Tao, en el menú económico ni en la lista del súper (prueba: tests/exclusiones-duras.test.ts).
+// «pescado» (versión anterior) quitaba pescado Y mariscos: se conserva igual (oculta) para quien ya lo tenía marcado.
+export const EXCLUSIONES: { id: string; nombre: string; etiquetas: Etiqueta[]; ids?: string[]; oculta?: boolean }[] = [
   { id: "vegetariano", nombre: "Soy vegetariano", etiquetas: ["res", "cerdo", "pollo", "pescado", "mariscos"], ids: ["jamon_pavo"] },
   { id: "vegano", nombre: "Soy vegano", etiquetas: ["res", "cerdo", "pollo", "pescado", "mariscos", "huevo", "lacteos"], ids: ["jamon_pavo"] },
   { id: "res", nombre: "Sin res", etiquetas: ["res"] },
   { id: "cerdo", nombre: "Sin cerdo", etiquetas: ["cerdo"] },
-  { id: "pescado", nombre: "Sin pescado ni mariscos", etiquetas: ["pescado", "mariscos"] },
+  { id: "pescado", nombre: "Sin pescado ni mariscos", etiquetas: ["pescado", "mariscos"], oculta: true },
+  { id: "sin_pescado", nombre: "Sin pescado", etiquetas: ["pescado"] },
+  { id: "sin_mariscos", nombre: "Sin mariscos", etiquetas: ["mariscos"] },
+  { id: "frutos_secos", nombre: "Sin frutos secos ni semillas", etiquetas: ["frutos_secos"] },
   { id: "lacteos", nombre: "Sin lácteos", etiquetas: ["lacteos"] },
   { id: "huevo", nombre: "Sin huevo", etiquetas: ["huevo"] },
   { id: "gluten", nombre: "Sin gluten", etiquetas: ["gluten"] },
 ];
+
+// Las que se muestran para elegir (sin las de versiones anteriores)
+export const EXCLUSIONES_VISIBLES = EXCLUSIONES.filter((e) => !e.oculta);
+// Lo que se muestra marcado: «pescado» (anterior) se ve como «Sin pescado» + «Sin mariscos» (así nadie empieza a recibir
+// mariscos sin elegirlo; al guardar ya quedan las dos nuevas)
+export const excluidosParaMostrar = (lista: string[]) => [...new Set(lista.flatMap((x) => (x === "pescado" ? ["sin_pescado", "sin_mariscos"] : [x])))];
+// Alimentos que se pueden elegir o quitar uno por uno (sin los que ya no salen en menús nuevos)
+export const ALIMENTOS_VISIBLES = (): Alimento[] => ALIMENTOS.filter((x) => !x.oculto);
 
 // ¿Se puede usar este alimento con lo que excluiste? (acepta grupos y alimentos sueltos)
 export function permitido(al: Alimento, excluidos: string[]): boolean {

@@ -23,7 +23,7 @@ export const NOMBRES_OBJETIVO: Record<Objetivo, string> = {
 export const NOMBRES_NIVEL: Record<Nivel, string> = { principiante: "Principiante", intermedio: "Intermedio", avanzado: "Avanzado" };
 export const NOMBRES_LUGAR: Record<Lugar, string> = {
   gimnasio: "Gimnasio",
-  casa_mancuernas: "Casa con mancuernas",
+  casa_mancuernas: "Casa con mancuernas (pesas de mano) o ligas",
   casa_sin_equipo: "Casa sin aparatos (solo tu cuerpo)",
 };
 export const NOMBRES_ACTIVIDAD: Record<Actividad, string> = {

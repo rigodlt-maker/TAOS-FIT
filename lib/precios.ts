@@ -11,7 +11,7 @@ export const PRECIO_KG: Record<string, number> = {
   tortilla: 26, tortilla_harina: 60, tostada: 70, pan_integral: 90, bolillo: 50, avena: 45, arroz: 12, arroz_integral: 18,
   pasta: 20, papa: 30, camote: 35, elote: 40, quinoa: 70, frijoles: 16, galletas_arroz: 200,
   platano: 25, manzana: 50, papaya: 30, melon: 30, naranja: 25, fresas: 80, mango: 40, pina: 30, guayaba: 40, sandia: 20,
-  nopales: 25, calabacita: 30, brocoli: 50, espinaca: 60, ensalada: 40, zanahoria: 20, chayote: 25, ejotes: 45,
+  nopales: 25, calabacita: 30, brocoli: 50, espinaca: 60, ensalada: 40, lechuga: 35, jitomate: 30, pepino: 25, zanahoria: 20, chayote: 25, ejotes: 45,
   champinones: 90, pimiento: 70, coliflor: 40, verduras_mixtas: 70,
   aguacate: 70, aceite_oliva: 250, crema_cacahuate: 140, almendras: 300, nueces: 350, cacahuates: 120,
 };

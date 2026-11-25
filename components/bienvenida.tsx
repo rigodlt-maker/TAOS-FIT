@@ -3,7 +3,7 @@
 import { ChevronLeft } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 import { empezar } from "@/lib/acciones";
-import { ALIMENTOS, EXCLUSIONES } from "@/lib/alimentos";
+import { ALIMENTOS_VISIBLES, EXCLUSIONES_VISIBLES } from "@/lib/alimentos";
 import { DIAS_SEMANA, NOMBRES_ACTIVIDAD, NOMBRES_GENERO, type Resultado } from "@/lib/tipos";
 import { cn } from "@/lib/utils";
 import { Tarjetas } from "./opciones";
@@ -193,9 +193,9 @@ export function Bienvenida() {
             valor="gimnasio"
             columnas={3}
             opciones={[
-              { valor: "gimnasio", titulo: "Gimnasio", icono: "🏢", detalle: "Con aparatos" },
-              { valor: "casa_mancuernas", titulo: "Casa con pesas", icono: "🏠", detalle: "Mancuernas o ligas" },
-              { valor: "casa_sin_equipo", titulo: "Casa sin aparatos", icono: "🤸", detalle: "Solo tu cuerpo" },
+              { valor: "gimnasio", titulo: "Gimnasio", icono: "🏢", detalle: "Con aparatos, máquinas y barras con discos" },
+              { valor: "casa_mancuernas", titulo: "Casa con pesas", icono: "🏠", detalle: "Mancuernas (pesas de mano) o ligas elásticas" },
+              { valor: "casa_sin_equipo", titulo: "Casa sin aparatos", icono: "🤸", detalle: "Solo tu cuerpo, una silla y un tapete" },
             ]}
           />
         </div>
@@ -232,7 +232,11 @@ export function Bienvenida() {
         </div>
         <label className="flex min-h-12 items-center gap-3 rounded-xl border px-3 text-sm">
           <input type="hidden" name="_campos" value="barra_dominadas" />
-          <input type="checkbox" name="barra_dominadas" className="size-5 accent-[#d4af37]" /> Tengo barra para dominadas
+          <input type="checkbox" name="barra_dominadas" className="size-5 accent-[#d4af37]" />
+          <span>
+            Tengo barra para dominadas
+            <span className="block text-xs text-muted-foreground">Una barra fija (en el marco de la puerta o en el gimnasio) para colgarte y subir el cuerpo.</span>
+          </span>
         </label>
         <div className="grid gap-2 text-sm font-medium">
           Fuera del gym, tu día es…
@@ -276,14 +280,26 @@ export function Bienvenida() {
       <Paso n={5} actual={paso} titulo="Tu comida" detalle="Armo tu menú con lo que ya comes. Toca lo que sí te gusta.">
         <div className="grid gap-2 text-sm font-medium">
           ¿Algo que no comes?
-          <Tarjetas name="alimentos_excluidos" multiple opciones={EXCLUSIONES.map((e) => ({ valor: e.id, titulo: e.nombre }))} />
+          <Tarjetas name="alimentos_excluidos" multiple opciones={EXCLUSIONES_VISIBLES.map((e) => ({ valor: e.id, titulo: e.nombre }))} />
         </div>
+        <details className="rounded-xl border p-3 text-sm">
+            <summary className="cursor-pointer font-medium">¿Algo más que no comes? Quítalo uno por uno</summary>
+            <p className="mt-1 text-xs text-muted-foreground">Lo que marques aquí nunca sale en tu menú.</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+            {ALIMENTOS_VISIBLES().map((a) => (
+                <label key={a.id} className="flex min-h-11 cursor-pointer items-center rounded-full border px-3 text-sm select-none has-checked:border-destructive has-checked:bg-destructive/10 has-checked:text-destructive">
+                  <input type="checkbox" name="alimentos_excluidos" value={a.id} defaultChecked={false} className="sr-only" />
+                {a.nombre}
+                </label>
+            ))}
+            </div>
+          </details>
         <input type="hidden" name="_campos" value="alimentos_habituales" />
         {GRUPOS_COMIDA.map(([grupo, nombre]) => (
           <div key={grupo} className="grid gap-2 text-sm font-medium">
             {nombre}
             <div className="flex flex-wrap gap-2">
-              {ALIMENTOS.filter((a) => a.grupo === grupo).map((a) => (
+              {ALIMENTOS_VISIBLES().filter((a) => a.grupo === grupo).map((a) => (
                 <label key={a.id} className="flex min-h-11 cursor-pointer items-center rounded-full border px-3 text-sm font-normal select-none has-checked:border-primary has-checked:bg-primary/10 has-checked:text-primary">
                   <input type="checkbox" name="alimentos_habituales" value={a.id} className="sr-only" />
                   {a.nombre}

@@ -1,6 +1,6 @@
 import { Casilla, Tarjetas } from "@/components/opciones";
 import { Input, Label, Select } from "@/components/ui/campos";
-import { ALIMENTOS, EXCLUSIONES } from "@/lib/alimentos";
+import { ALIMENTOS_VISIBLES, EXCLUSIONES_VISIBLES, excluidosParaMostrar } from "@/lib/alimentos";
 import { DIAS_SEMANA, NOMBRES_ACTIVIDAD, NOMBRES_GENERO, NOMBRES_LUGAR, NOMBRES_NIVEL, NOMBRES_OBJETIVO, type Perfil } from "@/lib/tipos";
 
 const lista = (o: Record<string, string>) => Object.entries(o).map(([valor, titulo]) => ({ valor, titulo }));
@@ -114,7 +114,10 @@ export function CamposEntreno({ p }: { p: Perfil }) {
         </Label>
       </div>
       <Casilla name="barra_dominadas" defaultChecked={p.barra_dominadas}>
-        Tengo barra para dominadas
+        <span>
+          Tengo barra para dominadas
+          <span className="block text-xs font-normal text-muted-foreground">Una barra fija (en el marco de la puerta o en el gimnasio) para colgarte y subir el cuerpo.</span>
+        </span>
       </Casilla>
       <div className="grid gap-2 text-sm font-medium">
         ¿Te molesta alguna zona?
@@ -157,13 +160,25 @@ export function CamposComida({ p }: { p: Perfil }) {
     <div className="grid gap-4">
       <div className="grid gap-2 text-sm font-medium">
         No como…
-        <Tarjetas name="alimentos_excluidos" multiple valor={p.alimentos_excluidos} opciones={EXCLUSIONES.map((e) => ({ valor: e.id, titulo: e.nombre }))} />
+        <Tarjetas name="alimentos_excluidos" multiple valor={excluidosParaMostrar(p.alimentos_excluidos)} opciones={EXCLUSIONES_VISIBLES.map((e) => ({ valor: e.id, titulo: e.nombre }))} />
       </div>
+      <details className="rounded-xl border p-3 text-sm">
+        <summary className="cursor-pointer font-medium">¿Algo más que no comes? Quítalo uno por uno</summary>
+        <p className="mt-1 text-xs text-muted-foreground">Lo que marques aquí nunca sale en tu menú.</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {ALIMENTOS_VISIBLES().map((a) => (
+            <label key={a.id} className="flex min-h-11 cursor-pointer items-center rounded-full border px-3 text-sm select-none has-checked:border-destructive has-checked:bg-destructive/10 has-checked:text-destructive">
+              <input type="checkbox" name="alimentos_excluidos" value={a.id} defaultChecked={p.alimentos_excluidos.includes(a.id)} className="sr-only" />
+              {a.nombre}
+            </label>
+          ))}
+        </div>
+      </details>
       <div className="grid gap-2 text-sm font-medium">
         Lo que sí como seguido
         <input type="hidden" name="_campos" value="alimentos_habituales" />
         <div className="flex flex-wrap gap-2">
-          {ALIMENTOS.map((a) => (
+          {ALIMENTOS_VISIBLES().map((a) => (
             <label key={a.id} className="flex min-h-11 cursor-pointer items-center rounded-full border px-3 text-sm font-normal select-none has-checked:border-primary has-checked:bg-primary/10 has-checked:text-primary">
               <input type="checkbox" name="alimentos_habituales" value={a.id} defaultChecked={p.alimentos_habituales.includes(a.id)} className="sr-only" />
               {a.nombre}

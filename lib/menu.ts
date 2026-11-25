@@ -65,7 +65,7 @@ const PLANTILLA: Record<TipoComida, Grupo[]> = {
 };
 
 export function candidatos(grupo: Grupo, tipo: TipoComida, excluidos: string[]) {
-  return ALIMENTOS.filter((x) => x.grupo === grupo && x.comidas.includes(tipo) && permitido(x, excluidos));
+  return ALIMENTOS.filter((x) => !x.oculto && x.grupo === grupo && x.comidas.includes(tipo) && permitido(x, excluidos));
 }
 
 // Gramos de cada alimento de una comida para acercarse a sus calorías, proteína y grasa
@@ -99,7 +99,7 @@ function porciones(elegidos: Alimento[], tipo: TipoComida, meta: { kcal: number;
 }
 
 // Corrige el día hasta quedar dentro de ±3% (y nunca fuera de ±5%): primero carbohidratos, luego fruta, grasa y proteína
-function cuadrarDia(dia: DiaMenu, meta: number) {
+function cuadrarDia(dia: DiaMenu, meta: number, excluidos: string[]) {
   const orden: Grupo[] = ["carbo", "fruta", "grasa", "proteina", "verdura"];
   for (let pasada = 0; pasada < 12; pasada++) {
     const diff = meta - macrosDia(dia).kcal;
@@ -123,9 +123,11 @@ function cuadrarDia(dia: DiaMenu, meta: number) {
   }
   // Si aún falta comida (topes por porción), se agrega una colación sencilla
   const faltan = meta - macrosDia(dia).kcal;
+  // 1.3.1: la fruta extra también respeta lo que no comes (antes era plátano fijo)
   if (faltan > meta * 0.04) {
-    const platano = ALIMENTOS.find((x) => x.id === "platano")!;
-    dia.comidas.push({ tipo: "colacion", items: [{ alimento: platano.id, gramos: ajustar(platano, faltan / (platano.kcal / 100)) }] });
+    const frutas = candidatos("fruta", "colacion", excluidos);
+    const extra = frutas.find((x) => x.id === "platano") ?? frutas[0];
+    if (extra) dia.comidas.push({ tipo: "colacion", items: [{ alimento: extra.id, gramos: ajustar(extra, faltan / (extra.kcal / 100)) }] });
   }
 }
 
@@ -174,7 +176,7 @@ export function generarMenu(metas: Metas, prefs: Preferencias, semilla: string):
       return { tipo, items: porciones(elegidos, tipo, { kcal: metas.kcal * parte, p: metas.proteina * parte, g: metas.grasa * parte }) };
     });
     const dia = { comidas };
-    cuadrarDia(dia, metas.kcal);
+    cuadrarDia(dia, metas.kcal, prefs.excluidos);
     dias.push(dia);
   }
   return { ...metas, dias, lotes };
