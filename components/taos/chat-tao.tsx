@@ -8,7 +8,7 @@ import { RespuestaTao } from "./respuesta-tao";
 
 type Mensaje = { pregunta: string; respuesta: string | null };
 
-export function ChatTao({ ejemplos, placeholder = "Pregúntale a Tao…" }: { ejemplos: string[]; placeholder?: string }) {
+export function ChatTao({ ejemplos, placeholder = "Pregúntale a Tao…", escucharBuscador = true }: { ejemplos: string[]; placeholder?: string; escucharBuscador?: boolean }) {
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [texto, setTexto] = useState("");
   const [ocupado, setOcupado] = useState(false);
@@ -36,6 +36,16 @@ export function ChatTao({ ejemplos, placeholder = "Pregúntale a Tao…" }: { ej
     setMensajes((m) => m.map((x, i) => (i === m.length - 1 ? { ...x, respuesta } : x)));
     setOcupado(false);
   }
+
+  // Lo que escribiste en el buscador 🔍 y no era una pantalla se le pregunta a Tao (solo el chat de la hoja, para no repetir)
+  const enviarRef = useRef(enviar);
+  enviarRef.current = enviar;
+  useEffect(() => {
+    if (!escucharBuscador) return;
+    const preguntar = (e: Event) => enviarRef.current(String((e as CustomEvent).detail ?? ""));
+    window.addEventListener("taos-preguntar", preguntar);
+    return () => window.removeEventListener("taos-preguntar", preguntar);
+  }, [escucharBuscador]);
 
   return (
     <div className="grid gap-3">

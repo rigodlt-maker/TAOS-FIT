@@ -4,6 +4,7 @@ import { Avatar } from "@/components/avatar";
 import Link from "next/link";
 import { AvisosPush } from "@/components/avisos-push";
 import { TamanoLetra } from "@/components/taos/tamano-letra";
+import { BarraBuscar } from "@/components/taos/buscador";
 import { FormularioContrasena } from "@/components/contrasena";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { enlaceCalendario } from "@/lib/calendario";
@@ -48,6 +49,7 @@ export default async function Yo() {
           </div>
         </div>
       </Card>
+      <BarraBuscar />
       <div className="grid grid-cols-2 gap-3">
         <Mosaico href="/perfil" icono={UserRound} titulo="Mi plan y perfil" detalle="Objetivos, días, lugares, clases y comida" />
         <Mosaico href="/medallas" icono={Award} titulo="Mis medallas" detalle="Tu álbum: colecciónalas todas" />
@@ -59,7 +61,7 @@ export default async function Yo() {
         <Mosaico href="https://www.google.com/maps/search/gimnasios+cerca+de+mi" icono={MapPin} titulo="Gimnasios cerca" detalle="Abre Google Maps" externo />
         <Mosaico href="https://www.google.com/maps/search/restaurantes+saludables+cerca+de+mi" icono={Salad} titulo="Comida saludable" detalle="Cerca de ti" externo />
       </div>
-      <Card>
+      <Card id="avisos" className="scroll-mt-24">
         <CardTitle className="mb-1">Notificaciones en el celular</CardTitle>
         <CardDescription className="mb-4">Te recuerdo cuándo entrenar y tu registro semanal.</CardDescription>
         <AvisosPush />
@@ -71,7 +73,7 @@ export default async function Yo() {
         </span>
         <span className="text-primary">›</span>
       </a>
-      <Card>
+      <Card id="pantalla" className="scroll-mt-24">
         <CardTitle className="mb-1">Pantalla</CardTitle>
         <CardDescription className="mb-4">Tamaño de la letra en este celular.</CardDescription>
         <TamanoLetra />
@@ -86,7 +88,7 @@ export default async function Yo() {
         )}
       </Card>
       {repo.modo === "supabase" && (
-        <Card>
+        <Card id="contrasena" className="scroll-mt-24">
           <CardTitle className="mb-1">Contraseña</CardTitle>
           <CardDescription className="mb-4">Es la misma de tus otras apps TAOS.</CardDescription>
           <FormularioContrasena />

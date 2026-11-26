@@ -1,7 +1,9 @@
 {
-  "version": "1.4.0",
+  "version": "1.4.1",
   "fecha": "2026-11-26",
   "novedades": [
+    "Nueva lupa 🔍 arriba: escribe lo que buscas («menú», «medidas», «pilates», «dónde entreno»…) y te lleva directo a esa pantalla. Si no es una pantalla, se lo pregunta a Tao.",
+    "En Menú también hay una barra para buscar.",
     "Objetivos: ahora puedes elegir uno o varios (por ejemplo, músculo + fuerza + resistencia). El primer ejercicio de cada día va con series de fuerza, los demás de músculo y al final unos minutos de cardio.",
     "Lugar por día: elige dónde entrenas cada día (gimnasio, casa con pesas o casa sin aparatos). Los días en casa, tu rutina usa solo ese equipo.",
     "Mis clases fijas: anota tus clases de pilates, yoga, barre o taichí. El día que tienes clase sale en Hoy con el botón «Ya fui ✓» y cuenta como entrenamiento de tu semana.",

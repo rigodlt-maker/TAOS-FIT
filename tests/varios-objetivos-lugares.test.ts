@@ -109,3 +109,13 @@ test("1.4.0: clases fijas — se ven el día que tocan y, al marcarlas, cuentan 
   assert.equal(entrenosSemana([], "2026-11-25", ["2026-11-25", "2026-11-10"]), 1);
   assert.equal(entrenosSemana([{ fecha: "2026-11-25" } as never], "2026-11-25", ["2026-11-25"]), 1); // mismo día no cuenta doble
 });
+
+test("1.4.0 (arreglos): el buscador lleva a objetivos, días y lugares, y clases fijas", async () => {
+  const { buscarDestinos } = await import("../components/taos/buscador");
+  const { DESTINOS } = await import("../lib/destinos");
+  const primero = (q: string) => buscarDestinos(q, DESTINOS)[0]?.ruta;
+  assert.equal(primero("pilates"), "/perfil#clases");
+  assert.equal(primero("mis clases"), "/perfil#clases");
+  assert.equal(primero("donde entreno"), "/perfil#dias");
+  assert.equal(primero("objetivos"), "/perfil#meta");
+});
