@@ -1,4 +1,5 @@
 // Calorías y macros calculados en código (sin IA), con la fórmula y una explicación de cada número
+import { objetivoNutricion } from "./objetivos";
 import { edad } from "./composicion";
 import type { Medida, Objetivo, Perfil } from "./tipos";
 
@@ -23,7 +24,9 @@ const CAMBIO: Record<Objetivo, number> = { grasa: -0.18, hipertrofia: 0.08, fuer
 const PROTEINA: Record<Objetivo, number> = { grasa: 2.2, hipertrofia: 2.0, fuerza: 2.0, resistencia: 1.8 };
 const GRASA_KG = 0.9;
 
-export function calcularObjetivos(p: Perfil, m: Pick<Medida, "peso_kg">, hoy?: string): Objetivos {
+export function calcularObjetivos(perfil: Perfil, m: Pick<Medida, "peso_kg">, hoy?: string): Objetivos {
+  // 1.4.0: con varios objetivos, las calorías siguen a «bajar grasa» si lo elegiste; si no, a músculo o fuerza
+  const p = { ...perfil, objetivo: objetivoNutricion(perfil) };
   const anios = edad(p.nacimiento, hoy);
   const masculino = p.cuerpo === "masculino";
   // Mifflin-St Jeor

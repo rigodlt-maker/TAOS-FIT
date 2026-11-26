@@ -49,8 +49,8 @@ export default async function Yo() {
         </div>
       </Card>
       <div className="grid grid-cols-2 gap-3">
+        <Mosaico href="/perfil" icono={UserRound} titulo="Mi plan y perfil" detalle="Objetivos, días, lugares, clases y comida" />
         <Mosaico href="/medallas" icono={Award} titulo="Mis medallas" detalle="Tu álbum: colecciónalas todas" />
-        <Mosaico href="/perfil" icono={UserRound} titulo="Mi perfil" detalle="Meta, días, comida y molestias" />
         <Mosaico href="/cuerpo" icono={Ruler} titulo="Medidas" detalle="Peso y cinta; tu personaje cambia" />
         <Mosaico href="/personaje" icono={Palette} titulo="Mi personaje" detalle="Cara, pelo y ropa" />
         <Mosaico href="/registro" icono={ClipboardCheck} titulo="Registro semanal" detalle="1 minuto: ajusta tu plan" />

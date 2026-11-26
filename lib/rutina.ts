@@ -1,7 +1,8 @@
 // Generador de rutinas personalizadas. Sin IA: reglas de entrenamiento según objetivo, nivel, días, tiempo,
 // lugar, molestias y zonas que quieres priorizar. "variante" rota los ejercicios cuando pides cambiarlos.
+import { cardioDe, objetivoPara, objetivosDe } from "./objetivos";
 import { EJERCICIOS, type Ejercicio, type Equipo, type Patron, type Zona } from "./ejercicios";
-import type { DiaPlan, EjercicioPlan, Nivel, Objetivo, Perfil } from "./tipos";
+import type { DiaPlan, EjercicioPlan, Lugar, Nivel, Objetivo, Perfil } from "./tipos";
 
 type Hueco = { patron: Patron; v?: number }; // v = 0 el mejor candidato, 1 el segundo, etc.
 type Plantilla = { nombre: string; enfoque: string; huecos: Hueco[] };
@@ -66,10 +67,11 @@ function puntaje(ej: Ejercicio, p: Perfil, semilla: string): number {
   // En los movimientos principales se prefieren los compuestos (jalón al pecho antes que pullover)
   if (ej.compuesto && !["biceps", "triceps"].includes(ej.patron)) s += 1.5;
   if (ej.compuesto && p.nivel !== "principiante" && ["barra", "mancuernas"].includes(ej.equipo)) s += 1;
-  if (p.objetivo === "fuerza" && ej.compuesto) s += ej.equipo === "barra" ? 3 : ej.equipo === "mancuernas" ? 1 : 0;
+  const objs = objetivosDe(p);
+  if (objs.includes("fuerza") && ej.compuesto) s += ej.equipo === "barra" ? 3 : ej.equipo === "mancuernas" ? 1 : 0;
   if (p.nivel === "principiante") s += ej.equipo === "maquina" ? 2 : ej.equipo === "barra" ? -1 : 0;
-  if (p.objetivo === "hipertrofia" && ["mancuernas", "polea", "maquina"].includes(ej.equipo)) s += 1;
-  if (p.objetivo === "resistencia" || p.objetivo === "grasa") s += ej.equipo === "corporal" || ej.equipo === "mancuernas" || ej.equipo === "kettlebell" ? 1 : 0;
+  if (objs.includes("hipertrofia") && ["mancuernas", "polea", "maquina"].includes(ej.equipo)) s += 1;
+  if (objs.includes("resistencia") || objs.includes("grasa")) s += ej.equipo === "corporal" || ej.equipo === "mancuernas" || ej.equipo === "kettlebell" ? 1 : 0;
   // Desempate personal: cada persona (y cada "cambiar ejercicios") recibe una combinación distinta
   return s + azar(`${semilla}:${ej.id}`) * 1.2;
 }
@@ -126,7 +128,7 @@ export function generarPlan(p: Perfil, variante = 0, semillaBase = p.nombre): { 
   const semilla = `${semillaBase}:${variante}`;
   const notas: string[] = [];
   const plantillas = division(p.dias_semana);
-  const cardio = p.objetivo === "grasa" ? (p.minutos_sesion >= 60 ? 20 : 12) : p.objetivo === "resistencia" ? 10 : 0;
+  const cardio = cardioDe(p);
   const disponible = Math.max(20, p.minutos_sesion - 8 - cardio); // 8 min de calentamiento
 
   const dias = plantillas.map((pl, i): DiaPlan => {
@@ -150,7 +152,7 @@ export function generarPlan(p: Perfil, variante = 0, semillaBase = p.nombre): { 
       const ej = elegir(hueco);
       if (!ej) continue;
       usados.add(ej.id);
-      const pres = prescripcion(ej, p.objetivo, p.nivel, ejercicios.length);
+      const pres = prescripcion(ej, objetivoPara(ej, ejercicios.length, p), p.nivel, ejercicios.length);
       // Prioridad: solo suma series a los ejercicios cuyo músculo principal es esa zona
       if (p.enfasis.includes(ej.zonas[0]) && ej.patron !== "core") pres.series = Math.min(5, pres.series + 1);
       ejercicios.push({ ejercicio: ej.id, ...pres });
@@ -161,7 +163,7 @@ export function generarPlan(p: Perfil, variante = 0, semillaBase = p.nombre): { 
       const ej = elegir(h(patron));
       if (!ej) continue;
       usados.add(ej.id);
-      ejercicios.push({ ejercicio: ej.id, ...prescripcion(ej, p.objetivo, p.nivel, ejercicios.length) });
+      ejercicios.push({ ejercicio: ej.id, ...prescripcion(ej, objetivoPara(ej, ejercicios.length, p), p.nivel, ejercicios.length) });
     }
     // Recorta desde el final (accesorios) hasta que quepa en tu tiempo, dejando al menos 3
     const total = () => ejercicios.reduce((s, e) => s + minutosDe(e), 0);
@@ -199,7 +201,14 @@ export function generarPlan(p: Perfil, variante = 0, semillaBase = p.nombre): { 
     resistencia: "Resistencia: 12–20 repeticiones con descansos cortos y un poco de cardio al final.",
     grasa: "Bajar grasa: pesas para conservar músculo y cardio al final. Lo que más cuenta es la comida.",
   };
-  notas.push(porObjetivo[p.objetivo]);
+  const objs = objetivosDe(p);
+  if (objs.length === 1) notas.push(porObjetivo[objs[0]]);
+  else {
+    notas.push(`Combinas ${objs.length} objetivos: ${objs.map((o) => porObjetivo[o].split(":")[0].toLowerCase()).join(", ")}.`);
+    if (objs.includes("fuerza")) notas.push("El primer ejercicio de cada día va con series de fuerza (pocas repeticiones, peso alto).");
+    if (objs.includes("hipertrofia")) notas.push("Los demás, con series de músculo (6–15 repeticiones).");
+    if (objs.includes("resistencia") || objs.includes("grasa")) notas.push(`Al final, ${cardioDe(p)} min de cardio.`);
+  }
   if (p.lesiones.length) notas.push("Se evitaron ejercicios que suelen molestar en las zonas que marcaste.");
   if (p.enfasis.length) notas.push(`Más series y un ejercicio extra para: ${p.enfasis.join(" y ")}.`);
   if (p.nivel === "principiante") notas.push("Primeras 2 semanas: usa pesos cómodos y aprende la técnica; luego la app te dirá cuándo subir.");
@@ -226,8 +235,9 @@ function parecidosEnCasa(ej: Ejercicio): Patron[] {
   if (ej.zonas[0] === "abdomen") return CASA_CORE;
   return CASA_EMPUJE;
 }
-export function aCasa(ejercicios: string[], p: Perfil): { cambios: Map<string, string>; sinEquivalente: string[] } {
-  const enCasa: Perfil = { ...p, lugar: "casa_sin_equipo" };
+// 1.4.0: sirve para cualquier lugar con menos equipo (por ejemplo, tu día en casa con pesas)
+export function aCasa(ejercicios: string[], p: Perfil, destino: Lugar = "casa_sin_equipo"): { cambios: Map<string, string>; sinEquivalente: string[] } {
+  const enCasa: Perfil = { ...p, lugar: destino };
   const equipo = equipoDisponible(enCasa);
   const cambios = new Map<string, string>();
   const sinEquivalente: string[] = [];

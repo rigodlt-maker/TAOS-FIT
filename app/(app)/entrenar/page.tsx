@@ -14,6 +14,7 @@ import { calentamiento, minutosDe } from "@/lib/calentamiento";
 import { ejercicioPorId } from "@/lib/ejercicios";
 import { diaQueToca, fechaBonita, hoyLocal } from "@/lib/entreno";
 import { sesionesDe, sugerir } from "@/lib/progresion";
+import { RANGO_LUGAR, lugarDelDia, objetivoPara } from "@/lib/objetivos";
 import { aCasa, alternativas, conVolumen, prescripcion } from "@/lib/rutina";
 import { obtenerRepo } from "@/lib/sesion";
 import { cn } from "@/lib/utils";
@@ -33,16 +34,18 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
   const hoy = hoyLocal();
   const enPlan = dia.ejercicios.map((e) => e.ejercicio);
   // "Hoy entreno en casa" (?casa=1): por hoy, todo con tu propio peso. Tu rutina del gym no cambia.
+  // 1.4.0: si ese día de la semana entrenas en un lugar con menos equipo (por ejemplo, casa con pesas), se adapta solo
   const puedeCasa = perfil.lugar !== "casa_sin_equipo";
-  const enCasa = puedeCasa && params.casa === "1";
-  const casa = enCasa ? aCasa(enPlan, perfil) : { cambios: new Map<string, string>(), sinEquivalente: [] as string[] };
-  const perfilHoy = enCasa ? { ...perfil, lugar: "casa_sin_equipo" as const } : perfil;
+  const lugarHoy = puedeCasa && params.casa === "1" ? ("casa_sin_equipo" as const) : lugarDelDia(perfil, hoy);
+  const enCasa = RANGO_LUGAR[lugarHoy] < RANGO_LUGAR[perfil.lugar];
+  const casa = enCasa ? aCasa(enPlan, perfil, lugarHoy) : { cambios: new Map<string, string>(), sinEquivalente: [] as string[] };
+  const perfilHoy = enCasa ? { ...perfil, lugar: lugarHoy } : perfil;
   // Cambios solo por hoy: ?c=viejo:nuevo (por ejemplo, el aparato está ocupado); tienen prioridad sobre los de "en casa"
   const pedidos = (Array.isArray(params.c) ? params.c : params.c ? [params.c] : []).map((x) => x.split(":") as [string, string]).filter(([v, n]) => ejercicioPorId(v) && ejercicioPorId(n));
   const cambiosHoy = new Map([...casa.cambios, ...pedidos]);
   const enlace = (extra: Map<string, string>) => {
     const q = new URLSearchParams({ dia: String(indice) });
-    if (enCasa) q.set("casa", "1");
+    if (enCasa && params.casa === "1") q.set("casa", "1");
     for (const [v, n] of extra) if (casa.cambios.get(v) !== n) q.append("c", `${v}:${n}`);
     return `/entrenar?${q}`;
   };
@@ -55,7 +58,7 @@ export default async function Entrenar({ searchParams }: { searchParams: Promise
   const planDe = (o: (typeof dia.ejercicios)[number], n: number) => {
     const id = cambiosHoy.get(o.ejercicio) ?? o.ejercicio;
     const nuevo = casa.cambios.get(o.ejercicio) === id ? ejercicioPorId(id) : undefined;
-    return conVolumen(nuevo ? { ejercicio: id, ...prescripcion(nuevo, perfil.objetivo, perfil.nivel, n) } : { ...o, ejercicio: id }, perfil.volumen);
+    return conVolumen(nuevo ? { ejercicio: id, ...prescripcion(nuevo, objetivoPara(nuevo, n, perfil), perfil.nivel, n) } : { ...o, ejercicio: id }, perfil.volumen);
   };
   // Qué ejercicios ya terminaste hoy (todas sus series guardadas)
   const visibles = dia.ejercicios.filter((o) => !casa.sinEquivalente.includes(o.ejercicio));

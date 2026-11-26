@@ -1,3 +1,4 @@
+import { objetivosDe, resumenLugares } from "@/lib/objetivos";
 import { CalendarPlus, Dumbbell, Info } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -22,7 +23,10 @@ export default async function Rutina({ searchParams }: { searchParams: Promise<{
   const calendario = enlaceCalendario(perfil, hoyLocal());
   return (
     <div className="grid gap-4">
-      <Titulo detalle={`${NOMBRES_OBJETIVO[perfil.objetivo]} · ${perfil.dias_semana} días · ${perfil.minutos_sesion} min · ${NOMBRES_LUGAR[perfil.lugar]}`}>Tu rutina</Titulo>
+      <Titulo detalle={`${objetivosDe(perfil).map((o) => NOMBRES_OBJETIVO[o]).join(" + ")} · ${perfil.dias_semana} días · ${perfil.minutos_sesion} min · ${resumenLugares(perfil)}`}>Tu rutina</Titulo>
+      <Link href="/perfil#entreno" className="-mt-2 flex min-h-11 items-center text-sm text-primary">
+        Cambiar objetivos, días, lugares o clases →
+      </Link>
       {nueva && <p className="rounded-xl border border-primary/50 px-4 py-3 text-sm">🎉 ¡Lista! Esta rutina se armó con tus datos. Toca un día para empezar, y{" "}
           <Link href="/perfil#personaje" className="text-primary underline">personaliza tu personaje</Link>.</p>}
 

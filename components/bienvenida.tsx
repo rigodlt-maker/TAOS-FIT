@@ -147,10 +147,11 @@ export function Bienvenida() {
         </details>
       </Paso>
 
-      <Paso n={2} actual={paso} titulo="¿Qué quieres lograr?">
+      <Paso n={2} actual={paso} titulo="¿Qué quieres lograr?" detalle="Elige uno o varios: tu rutina los combina.">
         <Tarjetas
-          name="objetivo"
-          valor="hipertrofia"
+          name="objetivos"
+          multiple
+          valor={["hipertrofia"]}
           columnas={1}
           opciones={[
             { valor: "grasa", titulo: "Bajar grasa", detalle: "Verme más definido sin perder músculo", icono: "🔥" },
@@ -188,6 +189,7 @@ export function Bienvenida() {
         </div>
         <div className="grid gap-2 text-sm font-medium">
           ¿Dónde entrenas?
+          <span className="text-xs font-normal text-muted-foreground">¿Vas a varios lugares (gimnasio y casa)? Elige el que tenga más equipo; después, en Menú › Perfil, eliges el lugar de cada día.</span>
           <Tarjetas
             name="lugar"
             valor="gimnasio"

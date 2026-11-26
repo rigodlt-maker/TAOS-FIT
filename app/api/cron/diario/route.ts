@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     const [perfil, plan, series, registros] = await Promise.all([repo.perfil(), repo.planActivo(), repo.series({ desde: sumarDias(hoy, -14) }), repo.registros()]);
     if (!perfil) return Response.json({ ok: true, nada: "sin perfil" });
     const avisos: AvisoPush[] = [];
-    const semana = entrenosSemana(series, hoy);
+    const semana = entrenosSemana(series, hoy, perfil?.clases_hechas ?? []);
     if (plan && tocaEntrenar(perfil, hoy, semana)) {
       const dia = plan.dias[diaQueToca(plan, series, hoy).dia];
       avisos.push({

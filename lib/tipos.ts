@@ -33,17 +33,34 @@ export const NOMBRES_ACTIVIDAD: Record<Actividad, string> = {
 };
 export const DIAS_SEMANA = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
+// 1.4.0 · Clases fijas (pilates, yoga…): se registran con su día y hora; la app no las arma
+export type TipoClase = "pilates" | "barre" | "sculpt" | "mobility" | "yoga" | "taichi" | "otra";
+export const NOMBRES_CLASE: Record<TipoClase, string> = {
+  pilates: "Pilates",
+  barre: "Barre",
+  sculpt: "Sculpt",
+  mobility: "Mobility",
+  yoga: "Yoga",
+  taichi: "Taichí",
+  otra: "Otra clase",
+};
+export type Clase = { id: string; tipo: TipoClase; dia: number; hora: string | null; minutos: number };
+
 export type Perfil = {
   nombre: string;
   genero: Genero;
   cuerpo: Cuerpo;
   nacimiento: string; // AAAA-MM-DD
   altura_cm: number;
-  objetivo: Objetivo;
+  objetivo: Objetivo; // el principal (= objetivos[0]); se guarda en su columna para que nada viejo se rompa
+  objetivos: Objetivo[]; // 1.4.0: todos los que elegiste, el principal primero
   nivel: Nivel;
   dias_semana: number; // 2 a 6
   minutos_sesion: number;
-  lugar: Lugar;
+  lugar: Lugar; // el lugar con más equipo de tus días; la rutina se arma para él
+  lugar_por_dia: Partial<Record<number, Lugar>>; // 1.4.0: dónde entrenas cada día (0 = domingo); vacío = siempre en «lugar»
+  clases: Clase[]; // 1.4.0: tus clases fijas
+  clases_hechas: string[]; // 1.4.0: fechas (AAAA-MM-DD) en que marcaste «Ya fui» a una clase; cuentan como entrenamiento
   barra_dominadas: boolean;
   lesiones: Lesion[];
   enfasis: Zona[]; // zonas que quieres priorizar (máximo 2)

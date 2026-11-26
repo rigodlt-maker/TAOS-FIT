@@ -1,7 +1,9 @@
+import { LugarPorDia } from "@/components/lugar-por-dia";
 import { Casilla, Tarjetas } from "@/components/opciones";
+import { hoyLocal } from "@/lib/entreno";
 import { Input, Label, Select } from "@/components/ui/campos";
 import { ALIMENTOS_VISIBLES, EXCLUSIONES_VISIBLES, excluidosParaMostrar } from "@/lib/alimentos";
-import { DIAS_SEMANA, NOMBRES_ACTIVIDAD, NOMBRES_GENERO, NOMBRES_LUGAR, NOMBRES_NIVEL, NOMBRES_OBJETIVO, type Perfil } from "@/lib/tipos";
+import { DIAS_SEMANA, NOMBRES_ACTIVIDAD, NOMBRES_CLASE, NOMBRES_GENERO, NOMBRES_LUGAR, NOMBRES_NIVEL, NOMBRES_OBJETIVO, type Perfil } from "@/lib/tipos";
 
 const lista = (o: Record<string, string>) => Object.entries(o).map(([valor, titulo]) => ({ valor, titulo }));
 
@@ -42,7 +44,11 @@ export function CamposTu({ p }: { p: Perfil }) {
 export function CamposMeta({ p }: { p: Perfil }) {
   return (
     <div className="grid gap-4">
-      <Tarjetas name="objetivo" valor={p.objetivo} opciones={lista(NOMBRES_OBJETIVO)} />
+      <div className="grid gap-2 text-sm font-medium">
+        ¿Qué quieres lograr?
+        <span className="text-xs font-normal text-muted-foreground">Elige uno o varios. Tu rutina los combina y tus calorías siguen a «Bajar grasa» si lo eliges.</span>
+        <Tarjetas name="objetivos" multiple valor={p.objetivos} opciones={lista(NOMBRES_OBJETIVO)} />
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <Label>
           Peso meta (kg)
@@ -58,6 +64,8 @@ export function CamposMeta({ p }: { p: Perfil }) {
 }
 
 export function CamposEntreno({ p }: { p: Perfil }) {
+  // Una clase nueva arranca en el día de hoy (hora del centro de México), para que salga en Hoy sin buscar el día
+  const hoySemana = new Date(`${hoyLocal()}T12:00:00Z`).getUTCDay();
   return (
     <div className="grid gap-4">
       <div className="grid grid-cols-2 gap-3">
@@ -72,7 +80,7 @@ export function CamposEntreno({ p }: { p: Perfil }) {
           </Select>
         </Label>
         <Label>
-          Dónde entrenas
+          Dónde entrenas (si es siempre el mismo lugar)
           <Select name="lugar" defaultValue={p.lugar}>
             {lista(NOMBRES_LUGAR).map((o) => (
               <option key={o.valor} value={o.valor}>
@@ -82,10 +90,48 @@ export function CamposEntreno({ p }: { p: Perfil }) {
           </Select>
         </Label>
       </div>
-      <div className="grid gap-2 text-sm font-medium">
+      <div id="dias" className="grid scroll-mt-20 gap-2 text-sm font-medium">
         Tus días de entreno
         <span className="text-xs font-normal text-muted-foreground">Si eliges días, te recuerdo esos días. Si varía, déjalos vacíos.</span>
         <Tarjetas name="dias_entreno" multiple columnas={4} valor={p.dias_entreno.map(String)} opciones={[1, 2, 3, 4, 5, 6, 0].map((d) => ({ valor: String(d), titulo: DIAS_SEMANA[d] }))} />
+      </div>
+      <LugarPorDia inicial={p.dias_entreno} lugares={p.lugar_por_dia} principal={p.lugar} opciones={lista(NOMBRES_LUGAR)} dias={DIAS_SEMANA} />
+      <div id="clases" className="grid scroll-mt-20 gap-2 text-sm font-medium">
+        Mis clases fijas
+        <span className="text-xs font-normal text-muted-foreground">
+          Pilates, barre, yoga, taichí… Elige la clase y <b>el día que vas</b>: ese día te sale en Hoy con «Ya fui ✓» y cuenta como entrenamiento. La app no las arma: las sigues con tu instructor. Para borrar una, elige «— Ninguna —».
+        </span>
+        <input type="hidden" name="_campos" value="clases" />
+        <div className="grid gap-3">
+          {[...p.clases, ...Array.from({ length: 2 }, () => null)].map((c, i) => (
+            <div key={c?.id ?? `nueva-${i}`} className="grid grid-cols-2 gap-2 rounded-xl border p-2">
+              <input type="hidden" name="clase_id" value={c?.id ?? ""} />
+              <Select name="clase_tipo" defaultValue={c?.tipo ?? ""} aria-label="Clase">
+                <option value="">— Ninguna —</option>
+                {lista(NOMBRES_CLASE).map((o) => (
+                  <option key={o.valor} value={o.valor}>
+                    {o.titulo}
+                  </option>
+                ))}
+              </Select>
+              <Select name="clase_dia" defaultValue={String(c?.dia ?? hoySemana)} aria-label="Día">
+                {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+                  <option key={d} value={d}>
+                    {DIAS_SEMANA[d]}
+                  </option>
+                ))}
+              </Select>
+              <Input name="clase_hora" type="time" defaultValue={c?.hora ?? ""} aria-label="Hora" />
+              <Select name="clase_minutos" defaultValue={String(c?.minutos ?? 60)} aria-label="Duración">
+                {[30, 45, 50, 60, 75, 90].map((m) => (
+                  <option key={m} value={m}>
+                    {m} min
+                  </option>
+                ))}
+              </Select>
+            </div>
+          ))}
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Label>

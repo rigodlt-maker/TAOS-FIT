@@ -1,4 +1,5 @@
 // Reglas del registro semanal (en código, sin IA). Cada ajuste se guarda con el dato que lo motivó.
+import { objetivoNutricion } from "./objetivos";
 import { ejercicioPorId } from "./ejercicios";
 import { sumarDias } from "./entreno";
 import { sugerir } from "./progresion";
@@ -19,7 +20,9 @@ export const ALERTA_SALUD = /dolor (agudo|fuerte|intenso|punzante)|mareo|mare[é
 const pct = (a: number, b: number) => ((a - b) / b) * 100;
 const f1 = (n: number) => (Math.round(n * 10) / 10).toLocaleString("es-MX");
 
-export function evaluarSemana(p: Perfil, registros: Registro[], plan: Plan | null, series: Serie[], hoy: string): Evaluacion {
+export function evaluarSemana(perfil: Perfil, registros: Registro[], plan: Plan | null, series: Serie[], hoy: string): Evaluacion {
+  // 1.4.0: el ajuste de calorías sigue al mismo objetivo que las calorías (ver lib/objetivos.ts)
+  const p = { ...perfil, objetivo: objetivoNutricion(perfil) };
   const r: Evaluacion = { ajustes: [], perfil: {}, cambios: [], consejos: [] };
   const lista = [...registros].sort((a, b) => a.fecha.localeCompare(b.fecha));
   const [w0, w1, w2] = [lista.at(-1), lista.at(-2), lista.at(-3)];

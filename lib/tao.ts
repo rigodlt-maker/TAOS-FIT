@@ -83,7 +83,7 @@ function menuDelDia(d: DatosTao, q: string): string {
 
 function entrenoDeHoy(d: DatosTao): string {
   if (!d.plan) return "Aún no tienes rutina. Termina tu perfil y la armo: [Mi perfil](/perfil).";
-  const semana = entrenosSemana(d.series, d.hoy);
+  const semana = entrenosSemana(d.series, d.hoy, d.perfil.clases_hechas);
   const toca = diaQueToca(d.plan, d.series, d.hoy);
   const dia = d.plan.dias[toca.dia];
   const ejercicios = dia.ejercicios

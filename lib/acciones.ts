@@ -1,5 +1,7 @@
 "use server";
 
+import { lugarBase } from "./objetivos";
+import { leerClases } from "./perfil";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { evaluarSemana, kcalDe, planConCambios } from "./ajustes";
@@ -50,6 +52,15 @@ function leerPerfil(f: FormData, anterior: Perfil | null): Perfil {
     p.altura_cm = altura;
   }
   p.objetivo = uno<Objetivo>("objetivo", ["hipertrofia", "fuerza", "resistencia", "grasa"], p.objetivo);
+  if (tiene("objetivo")) p.objetivos = [p.objetivo];
+  // 1.4.0: varios objetivos (el primero es el principal). Si no marcas ninguno, se queda lo que tenías
+  if (listas.includes("objetivos")) {
+    const elegidos = [...new Set(f.getAll("objetivos").map(String))].filter((o): o is Objetivo => ["hipertrofia", "fuerza", "resistencia", "grasa"].includes(o));
+    if (elegidos.length) {
+      p.objetivos = elegidos;
+      p.objetivo = elegidos[0];
+    }
+  }
   p.nivel = uno<Nivel>("nivel", ["principiante", "intermedio", "avanzado"], p.nivel);
   p.lugar = uno<Lugar>("lugar", ["gimnasio", "casa_mancuernas", "casa_sin_equipo"], p.lugar);
   p.actividad = uno<Actividad>("actividad", ["sedentaria", "ligera", "activa"], p.actividad);
@@ -62,6 +73,26 @@ function leerPerfil(f: FormData, anterior: Perfil | null): Perfil {
   if (listas.includes("dias_entreno")) {
     p.dias_entreno = [...new Set(f.getAll("dias_entreno").map(Number).filter((d) => d >= 0 && d <= 6))].sort();
     if (p.dias_entreno.length >= 2) p.dias_semana = Math.min(6, p.dias_entreno.length);
+  }
+  // 1.4.0: dónde entrenas cada día. La rutina se arma para el lugar con más equipo y los demás días se adaptan solos
+  if (listas.includes("lugar_por_dia")) {
+    const lugares: Partial<Record<number, Lugar>> = {};
+    for (let d = 0; d <= 6; d++) {
+      const v = texto(f, `lugar_dia_${d}`);
+      if (["gimnasio", "casa_mancuernas", "casa_sin_equipo"].includes(v) && (!p.dias_entreno.length || p.dias_entreno.includes(d))) lugares[d] = v as Lugar;
+    }
+    p.lugar_por_dia = lugares;
+    const usados = Object.values(lugares) as Lugar[];
+    if (usados.length) p.lugar = lugarBase(usados, p.lugar);
+  }
+  // 1.4.0: clases fijas (pilates, yoga…): se registran, la app no las arma. Un renglón sin tipo se borra
+  if (listas.includes("clases")) {
+    const tipos = f.getAll("clase_tipo").map(String);
+    const dias = f.getAll("clase_dia").map(String);
+    const horas = f.getAll("clase_hora").map(String);
+    const minutos = f.getAll("clase_minutos").map(String);
+    const ids = f.getAll("clase_id").map(String);
+    p.clases = leerClases(tipos.map((tipo, i) => (tipo ? { id: ids[i] || `${Date.now().toString(36)}${i}`, tipo, dia: Number(dias[i]), hora: horas[i] || null, minutos: Number(minutos[i]) || 60 } : null)).filter(Boolean));
   }
   if (listas.includes("alimentos_habituales")) p.alimentos_habituales = f.getAll("alimentos_habituales").map(String).slice(0, 80);
   if (listas.includes("alimentos_excluidos")) p.alimentos_excluidos = f.getAll("alimentos_excluidos").map(String).slice(0, 80);
@@ -127,8 +158,8 @@ export async function empezar(f: FormData): Promise<Resultado> {
   redirect("/?bienvenida=1");
 }
 
-const claveRutina = (p: Perfil | null) => (p ? JSON.stringify([p.objetivo, p.nivel, p.dias_semana, p.minutos_sesion, p.lugar, p.barra_dominadas, p.lesiones, p.enfasis]) : "");
-const claveMenu = (p: Perfil | null) => (p ? JSON.stringify([p.objetivo, p.cuerpo, p.actividad, p.dias_semana, p.alimentos_habituales, p.alimentos_excluidos, p.veces_cocina, p.ajuste_kcal]) : "");
+const claveRutina = (p: Perfil | null) => (p ? JSON.stringify([p.objetivos, p.nivel, p.dias_semana, p.minutos_sesion, p.lugar, p.barra_dominadas, p.lesiones, p.enfasis]) : "");
+const claveMenu = (p: Perfil | null) => (p ? JSON.stringify([p.objetivos, p.cuerpo, p.actividad, p.dias_semana, p.alimentos_habituales, p.alimentos_excluidos, p.veces_cocina, p.ajuste_kcal]) : "");
 
 // Cambiar tus datos: si cambió algo que afecta la rutina o el menú, se rehacen
 export async function guardarPerfil(f: FormData): Promise<Resultado> {
@@ -181,6 +212,23 @@ export async function cambiarEjercicioSiempre(viejo: string, nuevo: string): Pro
     await repo.guardarAjustes([{ fecha: hoyLocal(), tipo: "ejercicio", detalle: `${ejercicioPorId(viejo)?.nombre} → ${ejercicioPorId(nuevo)?.nombre}`, motivo: "Lo cambiaste tú desde el entrenamiento." }]).catch(() => {});
     refrescar();
     return { ok: true, mensaje: "Cambiado en tu rutina ✓" };
+  } catch (e) {
+    return error(e);
+  }
+}
+
+// 1.4.0 · «Ya fui» a una clase fija de hoy (o deshacerlo): ese día cuenta como entrenamiento
+export async function marcarClase(fecha: string): Promise<Resultado> {
+  try {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || fecha > hoyLocal()) return { ok: false, mensaje: "Esa fecha no se puede marcar." };
+    const repo = await obtenerRepo();
+    const perfil = await repo.perfil();
+    if (!perfil) return { ok: false, mensaje: "Primero llena tu perfil." };
+    const ya = perfil.clases_hechas.includes(fecha);
+    const clases_hechas = ya ? perfil.clases_hechas.filter((x) => x !== fecha) : [...perfil.clases_hechas, fecha].sort().slice(-60);
+    await repo.guardarPerfil({ ...perfil, clases_hechas });
+    refrescar();
+    return { ok: true, mensaje: ya ? "Listo: quité la marca." : "¡Bien! Tu clase cuenta como entrenamiento ✓" };
   } catch (e) {
     return error(e);
   }

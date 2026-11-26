@@ -19,10 +19,10 @@ export function diaQueToca(plan: Plan, series: Serie[], hoy = hoyLocal()): { dia
   return { dia: (ultimoDia + 1) % plan.dias.length, yaHoy: false };
 }
 
-// Días distintos que entrenaste en los últimos 7 días
-export function entrenosSemana(series: Serie[], hoy = hoyLocal()): number {
+// Días distintos que entrenaste en los últimos 7 días (1.4.0: también los días que fuiste a una de tus clases fijas)
+export function entrenosSemana(series: Serie[], hoy = hoyLocal(), clasesHechas: string[] = []): number {
   const desde = sumarDias(hoy, -6);
-  return new Set(series.filter((s) => s.fecha >= desde && s.fecha <= hoy).map((s) => s.fecha)).size;
+  return new Set([...series.map((s) => s.fecha), ...clasesHechas].filter((f) => f >= desde && f <= hoy)).size;
 }
 
 export function fechaBonita(fecha: string) {
