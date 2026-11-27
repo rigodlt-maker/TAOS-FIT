@@ -1,4 +1,5 @@
 import { Award, CalendarPlus, ClipboardCheck, Dumbbell, MapPin, Palette, Ruler, Salad, UserRound } from "lucide-react";
+import { MisDatos } from "@/components/mis-datos";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/avatar";
 import Link from "next/link";
@@ -87,6 +88,7 @@ export default async function Yo() {
           </p>
         )}
       </Card>
+      <MisDatos />
       {repo.modo === "supabase" && (
         <Card id="contrasena" className="scroll-mt-24">
           <CardTitle className="mb-1">Contraseña</CardTitle>
