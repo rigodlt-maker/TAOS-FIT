@@ -1,4 +1,5 @@
-import { cronAutorizado, repoDelDueno } from "@/lib/cron";
+import { cronAutorizado, porCadaUsuario } from "@/lib/cron";
+import type { Repo } from "@/lib/datos/repo";
 import { diaQueToca, entrenosSemana, hoyLocal, sumarDias } from "@/lib/entreno";
 import { enviarPush, type AvisoPush } from "@/lib/push";
 import { registroPendiente, tocaEntrenar } from "@/lib/semana";
@@ -9,27 +10,32 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   if (!cronAutorizado(req)) return new Response("No autorizado", { status: 401 });
   try {
-    const repo = await repoDelDueno();
-    const hoy = hoyLocal();
-    const [perfil, plan, series, registros] = await Promise.all([repo.perfil(), repo.planActivo(), repo.series({ desde: sumarDias(hoy, -14) }), repo.registros()]);
-    if (!perfil) return Response.json({ ok: true, nada: "sin perfil" });
-    const avisos: AvisoPush[] = [];
-    const semana = entrenosSemana(series, hoy, perfil?.clases_hechas ?? []);
-    if (plan && tocaEntrenar(perfil, hoy, semana)) {
-      const dia = plan.dias[diaQueToca(plan, series, hoy).dia];
-      avisos.push({
-        titulo: `🏋️ Hoy toca ${dia.nombre.replace(/^Día \d+ · /, "")}`,
-        cuerpo: `${dia.enfoque} · ${dia.ejercicios.length} ejercicios${perfil.hora_entreno ? ` a las ${perfil.hora_entreno}` : ""}. Llevas ${semana} de ${perfil.dias_semana} esta semana.`,
-        url: "/entrenar",
-        etiqueta: "entreno",
-      });
-    }
-    if (registroPendiente(perfil, registros, hoy))
-      avisos.push({ titulo: "📋 Tu registro semanal", cuerpo: `Esta semana entrenaste ${semana} de ${perfil.dias_semana} días. Un minuto para ajustar tu plan.`, url: "/registro", etiqueta: "registro" });
-    const push = await enviarPush(repo, avisos);
-    return Response.json({ ok: true, avisos: avisos.length, push });
+    // Nube F1: el mismo recordatorio para cada usuario (en modo propia, solo el dueño)
+    const r = await porCadaUsuario(recordarA);
+    return Response.json({ ok: true, usuarios: r.usuarios, fallas: r.fallas, avisos: r.resultados.reduce((t, x) => t + x.avisos, 0) });
   } catch (e) {
     console.error(e);
     return Response.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, { status: 500 });
   }
+}
+
+async function recordarA(repo: Repo) {
+  const hoy = hoyLocal();
+  const [perfil, plan, series, registros] = await Promise.all([repo.perfil(), repo.planActivo(), repo.series({ desde: sumarDias(hoy, -14) }), repo.registros()]);
+  if (!perfil) return { avisos: 0, push: null };
+  const avisos: AvisoPush[] = [];
+  const semana = entrenosSemana(series, hoy, perfil?.clases_hechas ?? []);
+  if (plan && tocaEntrenar(perfil, hoy, semana)) {
+    const dia = plan.dias[diaQueToca(plan, series, hoy).dia];
+    avisos.push({
+      titulo: `🏋️ Hoy toca ${dia.nombre.replace(/^Día \d+ · /, "")}`,
+      cuerpo: `${dia.enfoque} · ${dia.ejercicios.length} ejercicios${perfil.hora_entreno ? ` a las ${perfil.hora_entreno}` : ""}. Llevas ${semana} de ${perfil.dias_semana} esta semana.`,
+      url: "/entrenar",
+      etiqueta: "entreno",
+    });
+  }
+  if (registroPendiente(perfil, registros, hoy))
+    avisos.push({ titulo: "📋 Tu registro semanal", cuerpo: `Esta semana entrenaste ${semana} de ${perfil.dias_semana} días. Un minuto para ajustar tu plan.`, url: "/registro", etiqueta: "registro" });
+  const push = await enviarPush(repo, avisos);
+  return { avisos: avisos.length, push };
 }
