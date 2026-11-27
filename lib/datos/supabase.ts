@@ -45,7 +45,8 @@ export function repoSupabase(db: SupabaseClient, uid: string): Repo {
     usuario: uid,
 
     async esquemaPendiente() {
-      const [a, b] = await Promise.all([db.from("fit_profiles").select("datos").limit(1), db.from("fit_checkins").select("id").limit(1)]);
+      // Nube F1: aun para revisar si existe una columna, la consulta va con el user_id (nunca lee filas de otra persona)
+      const [a, b] = await Promise.all([db.from("fit_profiles").select("datos").eq("user_id", uid).limit(1), db.from("fit_checkins").select("id").eq("user_id", uid).limit(1)]);
       return faltaEsquema(a.error) || faltaEsquema(b.error);
     },
 
