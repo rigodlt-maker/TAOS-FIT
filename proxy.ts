@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { correoPermitido, SUPABASE_LLAVE_PUBLICA, SUPABASE_URL, supabaseConfigurado } from "./lib/supabase/config";
 
 // Los crons se protegen con CRON_SECRET
-const PUBLICAS = ["/login", "/auth", "/acceso-denegado", "/api/cron"];
+const PUBLICAS = ["/login", "/crear-cuenta", "/auth", "/acceso-denegado", "/api/cron"];
 
 // Renueva la sesión de Supabase en cada visita y deja pasar solo al correo permitido
 export async function proxy(req: NextRequest) {
