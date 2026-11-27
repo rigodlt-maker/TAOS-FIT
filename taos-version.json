@@ -1,7 +1,8 @@
 {
-  "version": "1.4.1",
-  "fecha": "2026-11-26",
+  "version": "1.4.2",
+  "fecha": "2026-11-27",
   "novedades": [
+    "Notificaciones más seguras: si cambiaste tu llave secreta, tu celular se vuelve a suscribir solo al abrir la app y no te quedas sin avisos. Si algo falla, en Notificaciones verás el botón «Activar».",
     "Nueva lupa 🔍 arriba: escribe lo que buscas («menú», «medidas», «pilates», «dónde entreno»…) y te lleva directo a esa pantalla. Si no es una pantalla, se lo pregunta a Tao.",
     "En Menú también hay una barra para buscar.",
     "Objetivos: ahora puedes elegir uno o varios (por ejemplo, músculo + fuerza + resistencia). El primer ejercicio de cada día va con series de fuerza, los demás de músculo y al final unos minutos de cardio.",
