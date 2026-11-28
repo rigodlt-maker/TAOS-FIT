@@ -8,7 +8,8 @@ import { Input, Label } from "@/components/ui/campos";
 import { pasoDeEntrada } from "@/lib/instalacion";
 import { esNube } from "@/lib/modo";
 import { SQL_INSTALAR } from "@/lib/sql";
-import { crearContrasena, entrarConContrasena, enviarEnlace } from "./acciones";
+import { crearContrasena, entrarConContrasena, enviarEnlace, recuperarContrasena } from "./acciones";
+import { InputContrasena } from "@/components/ui/contrasena";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,8 @@ const NOMBRE = "Tao Fit";
 // Tablas y columnas más nuevas de esta app: si alguna falta, hay que correr el código SQL
 const TABLAS: [string, string][] = [["fit_profiles", "datos"], ["fit_checkins", "id"], ["push_subscriptions", "id"]];
 
-export default async function Login({ searchParams }: { searchParams: Promise<{ enviado?: string; error?: string }> }) {
-  const { enviado, error } = await searchParams;
+export default async function Login({ searchParams }: { searchParams: Promise<{ enviado?: string; error?: string; recuperar?: string }> }) {
+  const { enviado, error, recuperar } = await searchParams;
   const estado = await pasoDeEntrada(TABLAS);
   const h = await headers();
   const direccion = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
@@ -28,7 +29,15 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
       <Card className="w-full max-w-md">
         <CardTitle className="text-xl">{NOMBRE}</CardTitle>
 
-        {enviado ? (
+        {recuperar ? (
+          <div className="mt-3 grid gap-3">
+            <CardDescription>Si ese correo tiene cuenta TAOS, te llegó un correo con el botón «Crear mi contraseña nueva». Ábrelo y crea la nueva: servirá para las 4 apps.</CardDescription>
+            <p className="text-xs text-muted-foreground">¿No llega? Revisa «Spam» o «Promociones».</p>
+            <Link href="/login" className="flex min-h-12 items-center justify-center rounded-xl border text-sm font-medium">
+              Volver a la entrada
+            </Link>
+          </div>
+        ) : enviado ? (
           <CardDescription className="mt-3">Te enviamos un enlace para entrar. Ábrelo desde este mismo celular o computadora, en este mismo navegador.</CardDescription>
         ) : estado.paso === "variables" ? (
           <div className="mt-4 grid gap-3 text-sm">
@@ -84,11 +93,11 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
             </Label>
             <Label>
               Crea una contraseña (mínimo 8 caracteres)
-              <Input name="contrasena" type="password" required minLength={8} autoComplete="new-password" />
+              <InputContrasena name="contrasena" required minLength={8} autoComplete="new-password" />
             </Label>
             <Label>
               Escríbela otra vez
-              <Input name="confirmar" type="password" required minLength={8} autoComplete="new-password" />
+              <InputContrasena name="confirmar" required minLength={8} autoComplete="new-password" />
             </Label>
             {aviso}
             <Button type="submit">Crear contraseña y entrar</Button>
@@ -103,7 +112,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
               </Label>
               <Label>
                 Contraseña
-                <Input name="contrasena" type="password" required autoComplete="current-password" />
+                <InputContrasena name="contrasena" required autoComplete="current-password" />
               </Label>
               {aviso}
               <Button type="submit">Entrar</Button>
@@ -115,6 +124,18 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
                 ¿Primera vez? Crea tu cuenta
               </Link>
             )}
+            {esNube() ? (
+              <details className="mt-5 border-t pt-4 text-sm">
+                <summary className="flex min-h-12 cursor-pointer items-center font-medium text-primary">¿Olvidaste tu contraseña o no la recuerdas?</summary>
+                <form action={recuperarContrasena} className="mt-3 grid gap-3">
+                  <p className="text-muted-foreground">Escribe tu correo y te mandamos un botón para crear una contraseña nueva. Servirá para las 4 apps.</p>
+                  <Input name="correo" type="email" required autoComplete="email" placeholder="tunombre@gmail.com" aria-label="Tu correo" />
+                  <Button type="submit" variant="outline">
+                    Mandarme el correo
+                  </Button>
+                </form>
+              </details>
+            ) : (
             <details className="mt-5 border-t pt-4 text-sm">
               <summary className="cursor-pointer text-muted-foreground">¿Olvidaste tu contraseña? Entra con un enlace por correo</summary>
               <div className="mt-3 grid gap-3">
@@ -133,6 +154,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
                 <p className="text-xs text-muted-foreground">Al entrar, crea una contraseña nueva en «Yo».</p>
               </div>
             </details>
+            )}
           </>
         )}
       </Card>
