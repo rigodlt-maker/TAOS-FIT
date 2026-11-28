@@ -1,12 +1,13 @@
 "use client";
 
 import { ChevronLeft } from "lucide-react";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { empezar } from "@/lib/acciones";
 import { ALIMENTOS_VISIBLES, EXCLUSIONES_VISIBLES } from "@/lib/alimentos";
 import { DIAS_SEMANA, NOMBRES_ACTIVIDAD, NOMBRES_GENERO, type Resultado } from "@/lib/tipos";
 import { cn } from "@/lib/utils";
 import { Tarjetas } from "./opciones";
+import { Suscribirme } from "./suscribirme";
 import { Button } from "./ui/button";
 import { Input, Label } from "./ui/campos";
 
@@ -50,7 +51,42 @@ function Paso({ n, actual, titulo, detalle, children }: { n: number; actual: num
   );
 }
 
-export function Bienvenida() {
+// Lo que vas escribiendo se guarda en este celular: si recargas, sales o te suscribes a la mitad, no lo pierdes.
+// (Se borra solo a los 7 días o cuando tu plan queda armado.)
+export const CLAVE_BORRADOR = "taos-fit-bienvenida";
+const SIETE_DIAS = 7 * 24 * 60 * 60 * 1000;
+
+function guardarBorrador(form: HTMLFormElement, paso: number) {
+  try {
+    const campos = [...new FormData(form).entries()].filter(([, v]) => typeof v === "string") as [string, string][];
+    localStorage.setItem(CLAVE_BORRADOR, JSON.stringify({ paso, campos, guardado: Date.now() }));
+  } catch {
+    // sin almacenamiento (modo privado): se sigue sin borrador
+  }
+}
+
+function leerBorrador(): { paso: number; campos: [string, string][] } | null {
+  try {
+    const b = JSON.parse(localStorage.getItem(CLAVE_BORRADOR) ?? "null") as { paso?: number; campos?: [string, string][]; guardado?: number } | null;
+    if (!b || !Array.isArray(b.campos) || !b.guardado || Date.now() - b.guardado > SIETE_DIAS) return null;
+    return { paso: Math.max(0, Math.min(PASOS.length - 1, Number(b.paso) || 0)), campos: b.campos };
+  } catch {
+    return null;
+  }
+}
+
+function aplicarBorrador(form: HTMLFormElement, campos: [string, string][]) {
+  const valores = new Map<string, string[]>();
+  for (const [k, v] of campos) if (k !== "_campos") valores.set(k, [...(valores.get(k) ?? []), v]);
+  for (const el of Array.from(form.elements) as HTMLInputElement[]) {
+    if (!el.name || el.name === "_campos" || el.type === "hidden" || !valores.has(el.name)) continue;
+    const lista = valores.get(el.name)!;
+    if (el.type === "radio" || el.type === "checkbox") el.checked = lista.includes(el.value);
+    else el.value = lista[0] ?? "";
+  }
+}
+
+export function Bienvenida({ sinSuscripcion = false }: { sinSuscripcion?: boolean }) {
   const [paso, setPaso] = useState(0);
   const [genero, setGenero] = useState("");
   const [aviso, setAviso] = useState<string | null>(null);
@@ -58,6 +94,24 @@ export function Bienvenida() {
   const [pendiente, iniciar] = useTransition();
   const ref = useRef<HTMLFormElement>(null);
   const ultimo = paso === PASOS.length - 1;
+  const avisoRef = useRef<HTMLDivElement>(null);
+
+  // Al abrir: si había un borrador, se recupera donde ibas
+  useEffect(() => {
+    const b = leerBorrador();
+    if (!b || !ref.current) return;
+    aplicarBorrador(ref.current, b.campos);
+    setGenero(String(new FormData(ref.current).get("genero") ?? ""));
+    setPaso(b.paso);
+  }, []);
+  // Cada cambio de paso también se guarda
+  useEffect(() => {
+    if (ref.current) guardarBorrador(ref.current, paso);
+  }, [paso]);
+  // Si no se pudo armar el plan, el mensaje se muestra en pantalla (antes quedaba hasta abajo, fuera de la vista)
+  useEffect(() => {
+    if (resultado && !resultado.ok) avisoRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [resultado]);
 
   const siguiente = () => {
     const error = revisarPaso(paso, new FormData(ref.current!));
@@ -75,8 +129,15 @@ export function Bienvenida() {
       onChange={(e) => {
         const t = e.target as unknown as HTMLInputElement;
         if (t.name === "genero") setGenero(t.value);
+        guardarBorrador(e.currentTarget, paso);
       }}
-      action={(f) => iniciar(async () => setResultado(await empezar(f)))}
+      // onSubmit (y no action): así, si algo falla, el formulario NO se vacía y no pierdes lo que llenaste
+      onSubmit={(e) => {
+        e.preventDefault();
+        const f = new FormData(e.currentTarget);
+        setResultado(null);
+        iniciar(async () => setResultado(await empezar(f)));
+      }}
     >
       <div className="grid gap-2">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -94,6 +155,11 @@ export function Bienvenida() {
         </div>
       </div>
 
+      {sinSuscripcion && paso === 0 && (
+        <p className="rounded-xl border border-primary/60 bg-card px-4 py-3 text-sm">
+          Puedes llenar tus datos ahora. Para guardar tu plan al final necesitarás empezar tus 7 días gratis; mientras tanto, lo que escribas se guarda en este celular.
+        </p>
+      )}
       <Paso n={0} actual={paso} titulo="¡Hola! Soy tu entrenador 💪" detalle="En 2 minutos armo tu rutina, tu menú y tu personaje. Todo se puede cambiar después.">
         <Label>
           ¿Cómo te llamas?
@@ -318,7 +384,18 @@ export function Bienvenida() {
       </Paso>
 
       {aviso && <p className="rounded-xl border border-destructive px-4 py-3 text-sm text-destructive">{aviso}</p>}
-      {resultado && !resultado.ok && <p className="rounded-xl border border-destructive px-4 py-3 text-sm text-destructive">{resultado.mensaje}</p>}
+      <div ref={avisoRef} role="alert" className="grid gap-3 empty:hidden">
+        {resultado && !resultado.ok && !sinSuscripcion && <p className="rounded-xl border border-destructive px-4 py-3 text-sm text-destructive">{resultado.mensaje}</p>}
+        {resultado && !resultado.ok && sinSuscripcion && (
+          <div className="grid gap-3 rounded-2xl border border-primary/60 bg-card p-4">
+            <p className="font-semibold">Tus respuestas están listas ✓</p>
+            <p className="text-sm text-muted-foreground">
+              Para guardar tu plan, empieza tus 7 días gratis. Lo que llenaste se queda guardado en este celular: después de suscribirte, solo toca «Armar mi plan» otra vez.
+            </p>
+            <Suscribirme />
+          </div>
+        )}
+      </div>
       <div className="sticky bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40">
         {/* Botones distintos (con key) para que el toque en "Siguiente" nunca envíe el formulario al cambiar de paso */}
         {ultimo ? (

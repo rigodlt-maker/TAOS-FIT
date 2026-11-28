@@ -19,6 +19,7 @@ import { calcularObjetivos } from "@/lib/nutricion";
 import { obtenerRepo } from "@/lib/sesion";
 import { registroPendiente, tocaEntrenar } from "@/lib/semana";
 import { ContinuarEntreno } from "@/components/continuar-entreno";
+import { LimpiarBorradorBienvenida } from "@/components/limpiar-borrador";
 
 const saludo = () => {
   const h = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Mexico_City", hour: "numeric", hour12: false }).format(new Date())) % 24;
@@ -81,6 +82,7 @@ export default async function Hoy({ searchParams }: { searchParams: Promise<{ bi
         </Card>
       )}
 
+      {bienvenida && <LimpiarBorradorBienvenida />}
       {bienvenida && (
         <Card className="border-primary/60">
           <div className="flex items-center gap-2">
